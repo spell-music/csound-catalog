@@ -1,0 +1,40 @@
+Name:          csound-catalog
+Version:       0.1
+Cabal-Version: >= 1.6
+License:       BSD3
+License-file:  LICENSE
+Author:	       Anton Kholomiov
+Synopsis:      a gallery of Csound instruments.
+Stability:     Experimental
+Tested-With:   GHC==7.6
+Build-Type:    Simple
+Category:      Music
+Maintainer:    <anton.kholomiov@gmail.com>
+
+Description:   
+    A gallery of Csound instruments.
+
+Extra-Source-Files : 
+
+Homepage:        https://github.com/anton-k/csound-catalog
+Bug-Reports:     https://github.com/anton-k/csound-catalog/issues
+
+Source-repository head
+    Type: git
+    Location: https://github.com/anton-k/csound-catalog
+
+Library
+  Ghc-Options:    -Wall
+  Build-Depends:
+        base >= 4, base < 5, transformers, csound-expression
+  Hs-Source-Dirs:      src/
+  Exposed-Modules:
+        Csound.Catalog.Drum
+        Csound.Catalog.Effect
+        Csound.Catalog.Envelope
+        Csound.Catalog.Reson
+        Csound.Catalog.Wave
+  Other-Modules:
+      
+
+
