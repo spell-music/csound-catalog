@@ -10,6 +10,11 @@ main = dac $ do
     return $ fmap (effect ((k*) . onBass)) a1
     where k = 0.1
 
+bayAtNightEffect :: Sig -> SE (Sig, Sig)
+bayAtNightEffect 
+    = effect (bassEnhancment 100 1.5) 
+    . reverbN 8 0.98 0.8 20000 . chorus 2 30
+
 onBass = bassEnhancment 100 1.5
 
 instr :: Msg -> Sig
@@ -17,19 +22,9 @@ instr msg = 0.5 * env * stringPad 10 amp (sig cps)
     where (amp, cps) = (ampmidi msg, cpsmidi msg)
           env = linsegr [1, 1, 1] 1.5 0
 
-odds :: [a] -> [a]
-odds as = fmap snd $ filter fst $ zip (cycle [True, False]) as 
-
-evens :: [a] -> [a]
-evens as 
-    | null as   = []
-    | otherwise = odds $ tail as
-
-stringPad :: D -> D -> Sig -> Sig
-stringPad xdur amp cps = aout
+stringPad :: D -> Sig -> Sig
+stringPad amp cps = aout
     where
-        -- slow attack and release
-        kctrl = linseg [0, xdur/4, amp, xdur/2, 0]
         -- skight chorus effect
         asig = (kctrl * ) $ sum $ fmap (oscBy wave . (cps + )) [0.1, 0, -0.1]
         aout = butlp asig (sig $ (amp - 0.5) * (40 * 127) + 900)

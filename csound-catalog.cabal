@@ -12,7 +12,8 @@ Category:      Music
 Maintainer:    <anton.kholomiov@gmail.com>
 
 Description:   
-    A gallery of Csound instruments.
+    A gallery of Csound instruments. 
+
 
 Extra-Source-Files : 
 
@@ -35,6 +36,12 @@ Library
         Csound.Catalog.Reson
         Csound.Catalog.Wave
   Other-Modules:
+        Csound.Catalog.Wave.Woodwind
+        Csound.Catalog.Wave.WoodwindAlg     
+        Csound.Catalog.Wave.Vowel
+        Csound.Catalog.Wave.Ac
+        Csound.Catalog.Wave.VestigeOfTime        
+        Csound.Catalog.Wave.Deserted
+        Csound.Catalog.Wave.TheHeartbeat
+        Csound.Catalog.Wave.TrappedInConvert
       
-
-

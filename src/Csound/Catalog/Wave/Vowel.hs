@@ -1,51 +1,81 @@
-module Vowel where
+module Csound.Catalog.Wave.Vowel(
+    -- * Singing a vowel.
+    --
+    -- | It's best to use this functions with vibrato.
+    --
+    -- > vibrato 0.12 5 $ oneVowel maleA 330
+
+    vowels, loopVowels, oneVowel, Vowel,
+    
+    -- * Vowels
+    maleA, maleE, maleIY, maleO, maleOO, maleU, maleER, maleUH,
+    femaleA, femaleE, femaleIY, femaleO, femaleOO    
+) where
 
 import Data.List(transpose)
 
 import Csound.Base
 
-main = dac $ runMix $ sco instr $ CsdEventList dt [(0, dt, ())]
-    where dt = 15
-
-instr' _ = fof 0.5 2 300 0 0 0.003 0.02 kdec 5 sine (sines4 [(0.5, 0.5, 270, 0.5)]) (10^7) `withDs` [0, 1]
-    where kdec = lindur [0.001, 1, 0.01]
-
-instr _ = 0.5 * vowels [(maleUH, 4), (maleER, 5)] (cps * (1 + 0.0125 * osc 5))
-    where cps = expseg [440, 3, 440, 3, 330, 3, 330, 1, 220, 3, 220]
-
-vowels :: [(Vowel, D)] -> Sig -> Sig
+-- | Sings a sequence of vowels with the given frequency. 
+--
+-- > vowels [(vowel1, dur1), (vowel2, dur2), (vowel3, dur3), ...] lastVowel cps
+--
+-- * @vowel1@, @vowel2@, ... lastVowel -- vowels
+--
+-- * dur1, dur2, ... - durations
+--
+-- * cps - frequency of the note.
+vowels :: [(Vowel, D)] -> Vowel -> Sig -> Sig
 vowels = vowelsBy mkEnv
-    where mkEnv xs = linseg ( ( ++ [fin, 1, fin]) $ (\(a, b) -> [a, b]) =<< xs)
-            where fin = fst $ last xs
+    where mkEnv xs fin = linseg ( ( ++ [fin, 1, fin]) $ (\(a, b) -> [a, b]) =<< xs)
 
-cycleVowels :: Sig -> [(Vowel, D)] -> Sig -> Sig
-cycleVowels xdur = vowelsBy mkEnv
-    where mkEnv xs = loopseg (1 / xdur) 0 0 ((++ [fin]) $ (\(a, b) -> [sig a, sig b]) =<< xs)
-            where fin = sig $ fst $ head xs
+-- | Sings a loop of vowels with the given frequency. 
+--
+-- > loopVowels xdur [(vowel1, dur1), (vowel2, dur2), (vowel3, dur3), ...] cps
+--
+-- * xdur - the duration of the loop of vowels.
+--
+-- * @vowel1@, @vowel2@, ...  -- vowels
+--
+-- * dur1, dur2, ... - durations
+--
+-- * cps - frequency of the note.
+loopVowels :: Sig -> [(Vowel, D)] -> Sig -> Sig
+loopVowels xdur params = vowelsBy mkEnv params lastVowel
+    where 
+        mkEnv xs fin = loopseg (1 / xdur) 0 0 ((++ [sig fin]) $ (\(a, b) -> [sig a, sig b]) =<< xs)
+        lastVowel = fst $ head params
 
-vowelsBy :: ([(D, D)] -> Sig) -> [(Vowel, D)] -> Sig -> Sig
-vowelsBy mkEnv params cps = case params of
-    [(vow, dt)] -> oneVowel vow cps
-    _           -> (/100) $ sum $ zipWith3 harm 
-                        [fmt1, fmt2, fmt3]
-                        [amp1, amp2, amp3]
-                        [bw1,  bw2,  bw3]
+-- | Generic construcotr for the signals that interpolate between vowel sounds.
+-- It takes a function that constructs an envelope to proceed from one vowel to another.
+-- The envelope function takes two parameters. It's list of vowels with durations
+-- and the value of the final vowel. 
+--
+-- > vowelsBy makeEnvelope vowelSquence lastVowel cps
+vowelsBy :: ([(D, D)] -> D -> Sig) -> [(Vowel, D)] -> Vowel -> Sig -> Sig
+vowelsBy mkEnv params lastVowel cps = case params of
+    [(vow, _)] -> oneVowel vow cps
+    _          -> (/100) $ sum $ zipWith3 harm 
+                        [fmt1, fmt2, fmt3, fmt4, fmt5]
+                        [amp1, amp2, amp3, amp4, amp5]
+                        [bw1,  bw2,  bw3,  bw4,  bw5]
     where
         (vs, dts) = unzip params
         [ fmt1, amp1, bw1, fmt2, amp2, bw2, fmt3, amp3, bw3
-            , fmt4, amp4, bw4, fmt5, amp5, bw5, ris,  dur,  dec         
-            ] = fmap (mkEnv . (flip zip dts)) $ transpose $ fmap vowelParams vs
+            , fmt4, amp4, bw4, fmt5, amp5, bw5, ris, dur, dec
+            ] = zipWith (\xs lastV -> mkEnv (zip xs dts) lastV) (transpose $ fmap vowelParams vs) (vowelParams lastVowel)
 
         harm fmt amp bw = fof amp cps fmt ioct bw ris dur dec iolaps sine sigmoid idur `withDs` [0, 1]
         ioct = 0
         iolaps = 20 
 
 
+-- | Sings a single vowel with the given frequency.
 oneVowel :: Vowel -> Sig -> Sig
 oneVowel v cps = (/100) $ sum $ zipWith3 harm
-        [fmt1, fmt2, fmt3]
-        [amp1, amp2, amp3]
-        [bw1,  bw2,  bw3]
+                        [fmt1, fmt2, fmt3, fmt4, fmt5]
+                        [amp1, amp2, amp3, amp4, amp5]
+                        [bw1,  bw2,  bw3,  bw4,  bw5]
     where
         [ fmt1, amp1, bw1, fmt2, amp2, bw2, fmt3, amp3, bw3
             , fmt4, amp4, bw4, fmt5, amp5, bw5, ris,  dur,  dec         
@@ -60,11 +90,11 @@ vowelParams :: Vowel -> [D]
 vowelParams v = fmap (flip tableD vowelTab . (+ index)) [0 .. 17] 
     where index = vowelIndex v
         
-
+-- | Abstract type that represents a vowel. 
 newtype Vowel = Vowel { unVowel :: D }
 
---instance Arg Vowel where
---    argMethods = makeArgMethods Vowel unVowel
+instance Arg Vowel where
+    argMethods = makeArgMethods Vowel unVowel
 
 maleA, maleE, maleIY, maleO, maleOO, maleU, maleER, maleUH,
     femaleA, femaleE, femaleIY, femaleO, femaleOO :: Vowel

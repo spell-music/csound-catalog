@@ -1,5 +1,12 @@
 -- | The implementation of the instruments that I've found in the Csound catalog
--- and collection of Csond-algorithmic composition (by Michael Gogins).
+-- and collection of Csond-algorithmic composition (by Michael Gogins) and
+-- some other sources.
+--
+-- Requirements:
+--
+-- * Library strives for modularity and simplicity. 
+-- 
+-- * It must be possible to use all instruments live with midi, so the function 'Csound.Base.idur' is forbidden.
 module Csound.Catalog 
     ( module Csound.Catalog.Drum
     , module Csound.Catalog.Effect

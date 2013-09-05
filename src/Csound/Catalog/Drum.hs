@@ -9,6 +9,8 @@ module Csound.Catalog.Drum(
     snare, openHihat, closedHihat,  
 
     -- ** Pitched drums
+    --
+    -- The instrument turns a pitch (in Hz) to the signal.
     bassDrum, crash, handClap 
 ) where
 
@@ -16,6 +18,7 @@ import Csound.Base
 
 -- subtractive 
 
+-- | A \"dumb\" drum.
 dumb :: SE Sig
 dumb = fmap (bpb 1000 100) $ rand $ expseg [0.0001, 0.01, 1, 0.04, 0.01]
 
