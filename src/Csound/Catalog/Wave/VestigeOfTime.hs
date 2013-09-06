@@ -2,7 +2,7 @@
 module Csound.Catalog.Wave.VestigeOfTime (
     filteredSaw, filteredSawRising, filteredSawFalling,
     filteredNoise, 
-    resonInstr, resonVibrato, 
+    resonInstr, simpleResonInstr, resonVibrato, 
     delaySaw, femaleVowel, amBell
 ) where
 
@@ -46,6 +46,21 @@ filteredNoise cfq  bw = do
     anoise <- rand 1
     return $ balance (reson anoise cfq bw `withD` 2) anoise
 
+-- | 
+-- > simpleResonInstr cycleLength cps
+simpleResonInstr :: D -> Sig -> Sig
+simpleResonInstr dt = resonInstr (f f21) (f f22)  (f f23) 1
+    where
+        f = onceBy dt
+
+        f21 = lins [1.000, 16, 0.950, 17, 0.830, 18, 0.680, 7, 0.530, 11, 0.390, 24, 0.200, 25, 0.120, 28, 0.050, 110, 0.000 ]
+
+        f22 = lins [0.000, 20, 0.790, 8, 0.920, 14, 0.980, 14, 0.880, 11, 0.730, 17, 0.580, 17, 0.420, 16, 0.280, 21, 0.210, 19, 0.140, 99, 0.000 ]
+
+        f23 = lins [0.000, 46, 0.690, 14, 0.880, 22, 0.980, 17, 0.880, 17, 0.700, 14, 0.570, 19, 0.400, 16, 0.310, 25, 0.220, 30, 0.090, 36, 0.000]
+
+
+
 -- | Signal is passed through three band-pass filters. 
 -- We can alter the relative center frequencies of the filters.
 --
@@ -71,7 +86,7 @@ resonInstr filt1 filt2 filt3 amp cps = aout
 --
 -- > resonVibrato vibDepth vibRate filtCps amp cps = aout
 resonVibrato :: Sig -> Sig -> Sig -> Sig -> Sig -> Sig
-resonVibrato vibDepth vibRate filt amp cps = aout
+resonVibrato vibDepth vibRate filt amp cps = gain 8 aout
     where
         asig = vibrato vibDepth vibRate ((amp * ) . oscBy waveTab) cps
         aout = reson asig (5000 * filt) 50 `withD` 2

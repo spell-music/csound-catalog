@@ -30,6 +30,7 @@ Library
         base >= 4, base < 5, transformers, csound-expression
   Hs-Source-Dirs:      src/
   Exposed-Modules:
+        Csound.Catalog
         Csound.Catalog.Drum
         Csound.Catalog.Effect
         Csound.Catalog.Envelope

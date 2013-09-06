@@ -1,20 +1,8 @@
 module Csound.Catalog.Wave.TheHeartbeat (
-    crackle, heartbeat, monoPluck, chorusel
+    heartbeat, monoPluck, chorusel
 ) where
 
 import Csound.Base
-
--- | 
--- > crackle noteDuration attackTime decayTime cps
-crackle :: D -> D -> D -> Sig -> Sig
-crackle xdur att dec cps = a3 
-    where a1 = k1 * osc cps
-          k1 = linen 1 att xdur dec
-          a2 = fof a1 (a1 + cps) (a1 / 50) k1 200 0.003 0.017 0.005 20 f1 f2 xdur
-          arev = reverb2 a2 5 1
-          a3 = 0.2 * (a2 + arev) 
-          f1 = sines [1] 								            -- SINE WAVE
-          f2 = sines [1, 0.5, 0.3, 0.25, 0.2, 0.167, 0.14, 0.111] 	-- SAWTOOTH
 
 -- | Deep kick sound.
 heartbeat :: Sig
@@ -25,13 +13,9 @@ heartbeat = phi 0.0024 f12 + phi 0.0078 f13
           xdur = 0.25
 
 -- | 
--- > monoPluck xdur pick plk amplitude cps
---
--- * pick - Proportion of the way along the string to sample the output.
--- 
--- * plk - The point of pluck is iplk, which is a fraction of the way up the string (0 to 1). A pluck point of zero means no initial pluck.
-monoPluck :: D -> D -> D -> D -> D -> Sig
-monoPluck xdur pick plk amp cps = a3  
+-- > monoPluck xdur cps
+monoPluck :: D -> D -> Sig
+monoPluck xdur cps = a3  
     where repluck' freq a = repluck plk (sig amp) freq (sig pick) 0.5 a           
           a1 = mean 
                 [ repluck' (cps - 1) (osc $ sig $ cps - 2) 
@@ -39,7 +23,9 @@ monoPluck xdur pick plk amp cps = a3
           a2 = linen (a1/2) (0.2 * xdur) xdur (0.8 * xdur)
           arev = reverb2 a2 1.5 1
           a3 = (a2 + 0.6 * arev) / 1.6
-         
+          pick = 0.8
+          plk  = 0.3
+          amp  = 1
 -- |
 -- > chorusel dur rise dec cps
 -- 
@@ -53,10 +39,10 @@ monoPluck xdur pick plk amp cps = a3
 chorusel :: D -> D -> D -> Sig -> (Sig, Sig)
 chorusel xdur rise dec cps = (a1, a2)
     where k1 = linen 1 rise xdur dec
-          k2 = linseg [1, idur, 0]
+          k2 = linseg [1, xdur, 0]
           k3 = kr $ osc 2
           k4 = kr $ 0.5 * osc 2
-          inote = cpspch cps
+          inote = cps
           as = fmap (\(d, a, f) -> k1 * f (inote + d + a)) [
             (-1, k3, saw),
             (1,  k4, f9),

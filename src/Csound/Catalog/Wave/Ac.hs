@@ -2,7 +2,7 @@ module Csound.Catalog.Wave.Ac(
     pulseWidth,
     xanadu1, xanadu2, stringPad, toneWheel,
     guitar, harpsichord, xing,
-    fmMod, filteredChorus, plainString, tubularBell, 
+    fmMod, filteredChorus, plainString, fmTubularBell, 
     delayedString, melody, rhodes, 
 ) where
 
@@ -225,9 +225,9 @@ rhodes cps = asignal
 
 -- | Tubular bell model, Perry Cook
 --
--- > tubularBell cps
-tubularBell :: Sig -> Sig
-tubularBell cps = asignal
+-- > fmTubularBell cps
+fmTubularBell :: Sig -> Sig
+fmTubularBell cps = asignal
     where
         iindex      = 1.5
         icrossfade  = 2.03

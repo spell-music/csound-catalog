@@ -18,20 +18,24 @@ import Csound.Base
 
 -- | Sings a sequence of vowels with the given frequency. 
 --
--- > vowels [(vowel1, dur1), (vowel2, dur2), (vowel3, dur3), ...] lastVowel cps
+-- > vowels maxDur [(vowel1, dur1), (vowel2, dur2), (vowel3, dur3), ...] lastVowel cps
+--
+-- * maxDur - total duration of the note
 --
 -- * @vowel1@, @vowel2@, ... lastVowel -- vowels
 --
 -- * dur1, dur2, ... - durations
 --
 -- * cps - frequency of the note.
-vowels :: [(Vowel, D)] -> Vowel -> Sig -> Sig
+vowels :: D -> [(Vowel, D)] -> Vowel -> Sig -> Sig
 vowels = vowelsBy mkEnv
     where mkEnv xs fin = linseg ( ( ++ [fin, 1, fin]) $ (\(a, b) -> [a, b]) =<< xs)
 
 -- | Sings a loop of vowels with the given frequency. 
 --
--- > loopVowels xdur [(vowel1, dur1), (vowel2, dur2), (vowel3, dur3), ...] cps
+-- > loopVowels maxDur xdur [(vowel1, dur1), (vowel2, dur2), (vowel3, dur3), ...] cps
+--
+-- * maxDur - total duration of the note
 --
 -- * xdur - the duration of the loop of vowels.
 --
@@ -40,8 +44,8 @@ vowels = vowelsBy mkEnv
 -- * dur1, dur2, ... - durations
 --
 -- * cps - frequency of the note.
-loopVowels :: Sig -> [(Vowel, D)] -> Sig -> Sig
-loopVowels xdur params = vowelsBy mkEnv params lastVowel
+loopVowels :: D -> Sig -> [(Vowel, D)] -> Sig -> Sig
+loopVowels maxDur xdur params = vowelsBy mkEnv maxDur params lastVowel
     where 
         mkEnv xs fin = loopseg (1 / xdur) 0 0 ((++ [sig fin]) $ (\(a, b) -> [sig a, sig b]) =<< xs)
         lastVowel = fst $ head params
@@ -52,9 +56,9 @@ loopVowels xdur params = vowelsBy mkEnv params lastVowel
 -- and the value of the final vowel. 
 --
 -- > vowelsBy makeEnvelope vowelSquence lastVowel cps
-vowelsBy :: ([(D, D)] -> D -> Sig) -> [(Vowel, D)] -> Vowel -> Sig -> Sig
-vowelsBy mkEnv params lastVowel cps = case params of
-    [(vow, _)] -> oneVowel vow cps
+vowelsBy :: ([(D, D)] -> D -> Sig) -> D -> [(Vowel, D)] -> Vowel -> Sig -> Sig
+vowelsBy mkEnv maxDur params lastVowel cps = case params of
+    [(vow, _)] -> oneVowel maxDur vow cps
     _          -> (/100) $ sum $ zipWith3 harm 
                         [fmt1, fmt2, fmt3, fmt4, fmt5]
                         [amp1, amp2, amp3, amp4, amp5]
@@ -65,14 +69,18 @@ vowelsBy mkEnv params lastVowel cps = case params of
             , fmt4, amp4, bw4, fmt5, amp5, bw5, ris, dur, dec
             ] = zipWith (\xs lastV -> mkEnv (zip xs dts) lastV) (transpose $ fmap vowelParams vs) (vowelParams lastVowel)
 
-        harm fmt amp bw = fof amp cps fmt ioct bw ris dur dec iolaps sine sigmoid idur `withDs` [0, 1]
+        harm fmt amp bw = fof amp cps fmt ioct bw ris dur dec iolaps sine sigmoid maxDur `withDs` [0, 1]
         ioct = 0
         iolaps = 20 
 
 
 -- | Sings a single vowel with the given frequency.
-oneVowel :: Vowel -> Sig -> Sig
-oneVowel v cps = (/100) $ sum $ zipWith3 harm
+--
+-- > oneVowel maxDur vowel cps
+--
+-- * maxDur - total duration of the note.
+oneVowel :: D -> Vowel -> Sig -> Sig
+oneVowel maxDur v cps = (/100) $ sum $ zipWith3 harm
                         [fmt1, fmt2, fmt3, fmt4, fmt5]
                         [amp1, amp2, amp3, amp4, amp5]
                         [bw1,  bw2,  bw3,  bw4,  bw5]
@@ -81,7 +89,7 @@ oneVowel v cps = (/100) $ sum $ zipWith3 harm
             , fmt4, amp4, bw4, fmt5, amp5, bw5, ris,  dur,  dec         
             ] = vowelParams v
 
-        harm fmt amp bw = fof (sig amp) cps (sig fmt) ioct (sig bw) (sig ris) (sig dur) (sig dec) iolaps sine sigmoid idur `withDs` [0, 1]
+        harm fmt amp bw = fof (sig amp) cps (sig fmt) ioct (sig bw) (sig ris) (sig dur) (sig dec) iolaps sine sigmoid maxDur `withDs` [0, 1]
         ioct = 0
         iolaps = 20 
      

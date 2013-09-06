@@ -6,13 +6,15 @@ import Csound.Base
 
 -- | Simple marimba (by John Fitch) with percussive envelope.
 --
---  simpleMarimba noteDur cps
+--  > simpleMarimba noteDur cps
 simpleMarimba :: D -> Sig -> Sig
 simpleMarimba xdur = marimbaWave xdur kenv
     where kenv = expseg [0.0001, 0.03, 1, xdur - 0.03, 0.001]
                * linseg [1, 0.03, 1, xdur - 0.03, 3]
 
 -- | Simple marimba (by John Fitch) without fixed envelope.
+--
+--  > marimba noteDur amp cps
 marimbaWave :: D -> Sig -> Sig -> Sig
 marimbaWave xdur amp cps = a6
     where
@@ -29,9 +31,12 @@ marimbaWave xdur amp cps = a6
 --
 -- > wind noteDur (bandRise, bandDecay) (freqRise, freqDecay) attackDecayRatio
 --
+-- -* bandRise, banDecay, freqRise, freqDecay -- (50, 1000)
+--
+-- * attackDecayRatio -- (0, 1)
 wind :: D -> (D, D) -> (D, D) -> D -> SE Sig
 wind xdur (bandRise, bandDec) (freqRise, freqDec) winds = 
-    fmap fromRnd $ rand (1 / 400)
+    fmap fromRnd $ rand 1
     where
         valu1 = 100
         valu2 = 50
@@ -46,7 +51,7 @@ wind xdur (bandRise, bandDec) (freqRise, freqDec) winds =
                 aout = (a2 + a3) * linseg [0, xdur * winds, 1, xdur * winde, 0]
 
 -- | 
--- noiz cps
+-- > noiz cps
 noiz :: Sig -> SE Sig
 noiz cps = fmap a2 k2
     where 

@@ -1,9 +1,11 @@
 module Csound.Catalog.Wave.TrappedInConvert (
-    ivory, blue, black        
+    ivory, blue, black, blackMarimba        
 ) where
 
 import Csound.Base
 
+-- | 
+-- > ivory xdur glisDur vibRate cpsCoeff cps
 ivory :: D -> D -> Sig -> D -> Sig -> Sig
 ivory xdur glisDur vibRate cpsCoeff cps = mean 
     --    vibrato env                amplitude env               freq bias   phase   vibrato coeff   wave
@@ -72,4 +74,10 @@ black xdur filterSweepStart filterSweepEnd bandWidth cps =
         a2 = k3 * osc (cps + 0.6 * (osc 11.3 `withD` 0.1))
         aout anoise = mean [a1 anoise, a2]
 
+
+-- | Black with fixed parameters.
+--
+-- > blackMarimba cps
+blackMarimba :: Sig -> SE Sig
+blackMarimba = black 3 100 500 50
 

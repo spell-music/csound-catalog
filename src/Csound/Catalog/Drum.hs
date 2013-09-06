@@ -56,15 +56,15 @@ metalBoink = foscil kampenv61 30 1 6.726 kampenv62 sine
 
 bassDrum :: D -> Sig
 bassDrum cps= env * osc (sig cps * kgliss * 0.5)
-    where env = linseg [0, 0.00245, 1, 0.1225, 0, 1, 0 ]
+    where env = linseg [0, 0.00245, 1, 0.1225, 0]
           kgliss = expseg [10, 0.625, 1, 0.25, 1]  
 
 
 openHihat :: SE Sig
-openHihat = hihat $ linseg [0, 0.004, 1, 0.121, 0, 1, 0]
+openHihat = hihat $ linseg [0, 0.004, 1, 0.121, 0]
 
 closedHihat :: SE Sig
-closedHihat = hihat $ linseg [0, 0.00245, 1, 0.1225, 0, 1, 0]
+closedHihat = hihat $ linseg [0, 0.00245, 1, 0.1225, 0]
 
 hihat :: Sig -> SE Sig
 hihat kenv = do
@@ -80,10 +80,10 @@ snare = do
     let as1 = butbp asound 210 55
     return $ kenv2 * (as1 * 0.9 + asound * 0.8 * kenv1)
     where 
-        kenv1 = linseg [0, 0.00176, 1, 0.1232, 0, 1, 0]
+        kenv1 = linseg [0, 0.00176, 1, 0.1232, 0]
         kenv2 = expseg [0.01, 0.0002, 1, 0.0297, 0.01, 0.09, 0.01]  
 
--- recommended values cpspch(13.03) - cpspch(13.10)
+-- | Recommended values cpspch(13.03) - cpspch(13.10)
 crash :: D -> SE Sig
 crash cps = do
     asig <- rand 1

@@ -3,14 +3,13 @@ module Csound.Catalog.Effect(
     nightChorus, nightReverb, 
     vibroDelay, delayLine, bassEnhancment, declick,
     sweepFilter, loopSweepFilter,
-    -- Presets
+    -- * Presets
     bayAtNight, vestigeOfTime
 ) where
 
 import Control.Monad
 
 import Csound.Base
-import Csound.Catalog.Envelope(fadeIn)
 
 -- | A signal goes throgh the chain of varible delays. 
 -- Delay time is affected by vibrato.
@@ -54,8 +53,8 @@ nightChorus idlym iscale asig = 0.5 * aout
 -- A bunch of delay lines FDN reverb, with feedback matrix based upon 
 -- physical modeling scattering junction of 8 lossless waveguides
 -- of equal characteristic impedance. Based on Julius O. Smith III, 
--- "A New Approach to Digital Reverberation using Closed Waveguide
--- Networks," Proceedings of the International Computer Music 
+-- \"A New Approach to Digital Reverberation using Closed Waveguide
+-- Networks,\" Proceedings of the International Computer Music 
 -- Conference 1985, p. 47-53 (also available as a seperate
 -- publication from CCRMA), as well as some more recent papers by
 -- Smith and others.

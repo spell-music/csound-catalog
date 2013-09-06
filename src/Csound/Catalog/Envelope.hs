@@ -1,13 +1,9 @@
 -- | Envelopes
 module Csound.Catalog.Envelope(
-    fadeIn, percussive, revPercussive        
+    percussive, revPercussive        
 ) where
 
 import Csound.Base
-
--- | Fades in with the given attack time.
-fadeIn :: D -> Sig
-fadeIn att = linseg [0, att, 1]
 
 -- | An exponential envelope for the percussive sound. It takes in a time of the decay section.
 percussive :: D -> Sig
