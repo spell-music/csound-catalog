@@ -11,6 +11,9 @@ module Csound.Catalog.Wave(
     fmMod, filteredChorus, plainString, fmTubularBell, 
     delayedString, melody, rhodes, 
     
+    -- * Amsterdam catalog instruments
+    tibetan,
+
     -- * Bay at night
     -- | Instruments from the piece \"Bay at night\" by JL Diaz.
     nightPad,
@@ -54,19 +57,24 @@ module Csound.Catalog.Wave(
     
     -- ** Vowels
     maleA, maleE, maleIY, maleO, maleOO, maleU, maleER, maleUH,
-    femaleA, femaleE, femaleIY, femaleO, femaleOO    
+    femaleA, femaleE, femaleIY, femaleO, femaleOO,
 
+    -- * Other instruments
+    okComputer
 ) where
 
 import Csound.Base
 
 import Csound.Catalog.Wave.Ac
+import Csound.Catalog.Wave.Amsterdam
 import Csound.Catalog.Wave.VestigeOfTime
 import Csound.Catalog.Wave.Vowel
 import Csound.Catalog.Wave.Woodwind
 import Csound.Catalog.Wave.Deserted
 import Csound.Catalog.Wave.TheHeartbeat
 import Csound.Catalog.Wave.TrappedInConvert
+
+import Csound.Catalog.Wave.Misc
 
 import Csound.Catalog.Reson
 
