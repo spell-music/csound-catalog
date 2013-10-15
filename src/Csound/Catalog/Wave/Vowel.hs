@@ -29,7 +29,7 @@ import Csound.Base
 -- * cps - frequency of the note.
 vowels :: D -> [(Vowel, D)] -> Vowel -> Sig -> Sig
 vowels = vowelsBy mkEnv
-    where mkEnv xs fin = linseg ( ( ++ [fin, 1, fin]) $ (\(a, b) -> [a, b]) =<< xs)
+    where mkEnv xs x = linseg ( ( ++ [x, 1, x]) $ (\(a, b) -> [a, b]) =<< xs)
 
 -- | Sings a loop of vowels with the given frequency. 
 --
@@ -47,7 +47,7 @@ vowels = vowelsBy mkEnv
 loopVowels :: D -> Sig -> [(Vowel, D)] -> Sig -> Sig
 loopVowels maxDur xdur params = vowelsBy mkEnv maxDur params lastVowel
     where 
-        mkEnv xs fin = loopseg (1 / xdur) 0 0 ((++ [sig fin]) $ (\(a, b) -> [sig a, sig b]) =<< xs)
+        mkEnv xs x = loopseg (1 / xdur) 0 0 ((++ [sig x]) $ (\(a, b) -> [sig a, sig b]) =<< xs)
         lastVowel = fst $ head params
 
 -- | Generic construcotr for the signals that interpolate between vowel sounds.
@@ -95,7 +95,7 @@ oneVowel maxDur v cps = (/100) $ sum $ zipWith3 harm
      
 
 vowelParams :: Vowel -> [D]
-vowelParams v = fmap (flip tableD vowelTab . (+ index)) [0 .. 17] 
+vowelParams v = fmap (flip table vowelTab . (+ index)) $ fmap int [0 .. 17] 
     where index = vowelIndex v
         
 -- | Abstract type that represents a vowel. 

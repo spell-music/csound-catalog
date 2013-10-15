@@ -25,7 +25,7 @@ evalRnd :: Rnd a -> D -> a
 evalRnd = evalState . unRnd 
 
 rndNext :: Rnd ()
-rndNext = Rnd $ modify $ fracD . (* 105.947) 
+rndNext = Rnd $ modify $ frac' . (* 105.947) 
 
 rndGet :: Rnd D
 rndGet = Rnd $ get
@@ -98,8 +98,8 @@ type WaveSpec = [Double]
 --
 -- * brightnessLevel - Controls the frequency of the low-pass filter. It's in (0, 1)
 woodwind :: WoodwindSpec -> D -> D -> D -> D -> D -> D -> D -> Sig
-woodwind spec seed vibPercent attack sustain decay brightnessLevel cps = 
-    evalRnd (rndWoodwind spec vibPercent attack sustain decay brightnessLevel cps) seed
+woodwind spec seedVal vibPercent attack sustain decay brightnessLevel cps = 
+    evalRnd (rndWoodwind spec vibPercent attack sustain decay brightnessLevel cps) seedVal
 
 rndWoodwind :: WoodwindSpec -> D -> D -> D -> D -> D -> D -> Rnd Sig
 rndWoodwind spec vibCoeff attack sustain decay brightnessLevel cps = do
@@ -147,7 +147,7 @@ rndWoodwind spec vibCoeff attack sustain decay brightnessLevel cps = do
 
         brightness :: (D, D, D) -> D -> Sig -> Sig
         brightness (iattack, isustain, idecay) level asig = balance (tone asig env) asig 
-            where ifiltcut = tableiD (9 * level) (skipNorm $ doubles [40, 40, 80, 160, 320, 640, 1280, 2560, 5120, 10240, 10240])
+            where ifiltcut = tablei (9 * level) (skipNorm $ doubles [40, 40, 80, 160, 320, 640, 1280, 2560, 5120, 10240, 10240])
                   env = linseg [0, iattack, ifiltcut, isustain, ifiltcut, idecay, 0]  
 
 ----------------------------------------------------------------
@@ -161,7 +161,7 @@ fromSpec specs durs ifreq = (hs, inorm)
 
         freqs = fmap rangeFreq specs
 
-byFreq :: CsdTuple a => D -> [(D, a)] -> a
+byFreq :: Tuple a => D -> [(D, a)] -> a
 byFreq ifreq as = guardedTuple (fmap (\(cps, val) -> (sig ifreq <* sig cps, val)) $ init as) (snd $ last as)
 
 

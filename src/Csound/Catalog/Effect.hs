@@ -122,12 +122,12 @@ bassEnhancment cfq k asig = sig k * butlp asig (sig cfq) + asig
 -- @n@ is a number of filters, k - is scale of the signals that is passed through each delay line).
 delayLine :: Int -> D -> D -> Sig -> (Sig, Sig)
 delayLine n k dt asig = (mean $ asig : odds asigs, mean $ asig : evens asigs)
-    where phi x = delaySig (x * sig k) dt
-          asigs = take n $ iterate phi (delaySig asig dt)
+    where phi x = delay (x * sig k) dt
+          asigs = take n $ iterate phi (delay asig dt)
 
 -- | Adds a very short fade in to remove the click at the beggining of the note.
 declick :: Out a => a -> a
-declick = gain $ fadeIn 0.01
+declick = gainOut $ fadeIn 0.01
 
 -- | Sweep band pass filter (center frequency ramps from one value to another)
 --
@@ -146,13 +146,13 @@ loopSweepFilter dur start end bandWidth = bp centerFreq bandWidth
 -- | The effect that was used in the piece \"Bay at night\".
 bayAtNight :: Sig -> SE (Sig, Sig)
 bayAtNight
-    = fmap (effect (bassEnhancment 100 1.5))
+    = mapOut (bassEnhancment 100 1.5)
     . nightReverb 8 0.98 0.8 20000 
     . nightChorus 2 30
 
 -- | The effect that was used in the piece \"Vestige of time\".
 vestigeOfTime :: Sig -> (Sig, Sig)
 vestigeOfTime 
-    = effect ((* 0.3) . (\x -> reverb2 x 2 0.2))     
+    = mapOut ((* 0.3) . (\x -> reverb2 x 2 0.2))     
     . delayLine 6 1.2 0.9
 

@@ -24,9 +24,9 @@ ivory xdur glisDur vibRate cpsCoeff cps = mean
     where
         alg :: Sig -> Sig -> D -> D -> D -> Tab -> Sig    
         alg vibrEnv ampEnv cpsBias phsBias vibrCoeff wave = 
-            ampEnv * (oscBy wave ((cps + sig cpsBias + vibr) * glis) `withD` phsBias)
+            ampEnv * (oscBy wave ((cps + sig cpsBias + kvibr) * glis) `withD` phsBias)
             where glis = expseg [1, glisDur, 1, xdur - glisDur, cpsCoeff]
-                  vibr = vibrEnv * osc (vibRate * sig vibrCoeff)
+                  kvibr = vibrEnv * osc (vibRate * sig vibrCoeff)
                 
         cone a x1 b x2 c = [a, x1 * xdur, b, x2 * xdur, c]
         lincone a x1 b x2 c = linseg $ cone a x1 b x2 c

@@ -88,7 +88,7 @@ resonInstr filt1 filt2 filt3 amp cps = aout
 resonVibrato :: Sig -> Sig -> Sig -> Sig -> Sig -> Sig
 resonVibrato vibDepth vibRate filt amp cps = gain 8 aout
     where
-        asig = vibrato vibDepth vibRate ((amp * ) . oscBy waveTab) cps
+        asig = vibrate vibDepth vibRate ((amp * ) . oscBy waveTab) cps
         aout = reson asig (5000 * filt) 50 `withD` 2
 
         waveTab = sines [1, 0.832, 0.5, 0.215, 0.6, 0.133, 0.785, 0.326, 0.018, 0.028, 0.0647, 0.0143, 0.0213]

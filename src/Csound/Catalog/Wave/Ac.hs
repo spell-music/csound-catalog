@@ -82,7 +82,7 @@ stringPad amp cps = blp (900 + amp * 300) $ chorus [0, 0.1, -0.1] f cps
 toneWheel :: D -> Sig
 toneWheel cps = asignal
     where
-        ikey = 12 * intD (cps - 6) + 100 * (cps - 6)
+        ikey = 12 * int' (cps - 6) + 100 * (cps - 6)
         wheels = 
             [ ifB (ikey - 12 >* 12) gitonewheel1 gitonewheel2
             , ifB (ikey +  7 >* 12) gitonewheel1 gitonewheel2
@@ -238,7 +238,7 @@ fmTubularBell cps = asignal
         ifn3        = sine
         ifn4        = sine
         ivibefn     = cosine
-        asignal     = fmbell 1 cps iindex icrossfade ivibedepth iviberate ifn1 ifn2 ifn3 ifn4 ivibefn
+        asignal     = fmbell 1 cps iindex icrossfade ivibedepth iviberate `withTabs` [ifn1, ifn2, ifn3, ifn4, ivibefn]
 
 -- | Delayed plucked string, Michael Gogins
 --
