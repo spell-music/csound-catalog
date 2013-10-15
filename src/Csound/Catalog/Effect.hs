@@ -127,7 +127,7 @@ delayLine n k dt asig = (mean $ asig : odds asigs, mean $ asig : evens asigs)
 
 -- | Adds a very short fade in to remove the click at the beggining of the note.
 declick :: Out a => a -> a
-declick = gainOut $ fadeIn 0.01
+declick = mapOut (fadeIn 0.01 * )
 
 -- | Sweep band pass filter (center frequency ramps from one value to another)
 --

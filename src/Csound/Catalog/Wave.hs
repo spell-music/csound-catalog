@@ -81,8 +81,7 @@ import Csound.Catalog.Reson
 -- | 
 -- > nightPad fadeInTime cps
 nightPad :: D -> Sig -> Sig
-nightPad dt = gain (fadeIn dt) . stringPad 1
-
+nightPad dt = (fadeIn dt * ) . stringPad 1
 
 -- modal synthesis
     

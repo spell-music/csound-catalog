@@ -64,7 +64,7 @@ modesInstr = wetModesInstr 0.1
 
 wetModesInstr :: D -> Modes Sig -> Sig -> Sig -> Sig
 wetModesInstr dryRatio ms exciter cps
-    = gain (modesGain ms)
+    = (modesGain ms * )
     $ dryWet (sig dryRatio) (modes (fromModes ms) cps) exciter   
 
 ---------------------------------------------------
