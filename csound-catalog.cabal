@@ -27,7 +27,7 @@ Source-repository head
 Library
   Ghc-Options:    -Wall
   Build-Depends:
-        base >= 4, base < 5, transformers, csound-expression
+        base >= 4, base < 5, transformers >= 0.3, csound-expression >= 3.0.0
   Hs-Source-Dirs:      src/
   Exposed-Modules:
         Csound.Catalog

@@ -101,8 +101,10 @@ vowelParams v = fmap (flip table vowelTab . (+ index)) $ fmap int [0 .. 17]
 -- | Abstract type that represents a vowel. 
 newtype Vowel = Vowel { unVowel :: D }
 
-instance Arg Vowel where
-    argMethods = makeArgMethods Vowel unVowel
+instance Tuple Vowel where
+    tupleMethods = makeTupleMethods Vowel unVowel
+
+instance Arg Vowel
 
 maleA, maleE, maleIY, maleO, maleOO, maleU, maleER, maleUH,
     femaleA, femaleE, femaleIY, femaleO, femaleOO :: Vowel

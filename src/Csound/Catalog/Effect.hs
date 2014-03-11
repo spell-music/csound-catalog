@@ -126,8 +126,8 @@ delayLine n k dt asig = (mean $ asig : odds asigs, mean $ asig : evens asigs)
           asigs = take n $ iterate phi (delay asig dt)
 
 -- | Adds a very short fade in to remove the click at the beggining of the note.
-declick :: Out a => a -> a
-declick = mapOut (fadeIn 0.01 * )
+declick :: Sig -> Sig
+declick = (fadeIn 0.01 * )
 
 -- | Sweep band pass filter (center frequency ramps from one value to another)
 --
@@ -149,10 +149,12 @@ bayAtNight
     = mapOut (bassEnhancment 100 1.5)
     . nightReverb 8 0.98 0.8 20000 
     . nightChorus 2 30
+    where mapOut f = fmap (\(a, b) -> (f a, f b))
 
 -- | The effect that was used in the piece \"Vestige of time\".
 vestigeOfTime :: Sig -> (Sig, Sig)
 vestigeOfTime 
     = mapOut ((* 0.3) . (\x -> reverb2 x 2 0.2))     
     . delayLine 6 1.2 0.9
+    where mapOut f (a, b) = (f a, f b)
 
