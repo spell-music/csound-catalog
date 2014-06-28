@@ -7,7 +7,7 @@ module Csound.Catalog.Wave.Woodwind
     , dizi
     ) where
 
-import Csound.Base
+import Csound.Base hiding (fromSpec)
 
 import Csound.Catalog.Wave.WoodwindAlg
 

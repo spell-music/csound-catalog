@@ -7,7 +7,7 @@ module Csound.Catalog.Wave.WoodwindAlg(
 import Data.List (transpose, intersperse)
 import Control.Monad.Trans.State
 
-import Csound.Base
+import Csound.Base hiding (fromSpec)
 
 ----------------------------------------------------------------
 -- Deterministic random numbers
