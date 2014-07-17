@@ -34,7 +34,7 @@ filteredSawFalling fallDur = filteredSaw (linseg [5000, fallDur, 500])
 filteredSaw :: Sig -> Sig -> Sig
 filteredSaw kcf cps = aout
     where 
-        a1      = chorus [0, 0.998, 1.003] saw cps
+        a1      = chorusPitch 3 0.003 saw cps
         aout    = reson a1 kcf 100 `withD` 2
 
 -- | The white noise is filtered with band pass filter. Centere frequency of the filter 
@@ -97,7 +97,7 @@ resonVibrato vibDepth vibRate filt amp cps = gain 8 aout
 femaleVowel :: Reson -> Sig -> Sig
 femaleVowel vowel cps = aout
     where 
-        afilt1 = chorus [0, 1.003] (\x -> buzz 1 x 15 sine) cps
+        afilt1 = chorusPitch 3 0.003 (\x -> buzz 1 x 15 sine) cps
         aout = blp 2000 $ resonsBy (\cf bw x -> reson x cf bw `withD` 2) vowel afilt1
           
 -- | Delayed saw wave.

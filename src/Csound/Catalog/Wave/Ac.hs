@@ -73,7 +73,7 @@ xanadu2 cps = do
 --
 -- > stringPad amplitude cps
 stringPad :: Sig -> Sig -> Sig
-stringPad amp cps = blp (900 + amp * 300) $ chorus [0, 0.1, -0.1] f cps
+stringPad amp cps = blp (900 + amp * 300) $ chorusPitch 3 0.1 f cps
     where f x = poscil 1 x giwave
 
 -- | Tone wheel organ by Mikelson

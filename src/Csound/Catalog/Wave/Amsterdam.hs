@@ -15,9 +15,7 @@ import Csound.Base
 -- 
 -- * cps - the frequency of the note
 tibetan :: Int -> Sig -> D -> Sig
-tibetan n off cps = chorus dts (oscBy wave) (sig cps)
+tibetan n off cps = chorusPitch n (2 * off * fromIntegral n) (oscBy wave) (sig cps)
     where wave = ifB (cps <* 230) (waveBy 5) (ifB (cps <* 350) (waveBy 3) (waveBy 1))
           waveBy x = sines $ [0.3, 0, 0, 0] ++ replicate x 0.1
-
-          dts = fmap ((* off) . fromIntegral) $ let dx = div n 2 in fmap (\x -> x - dx) [0 .. n - 1]
 

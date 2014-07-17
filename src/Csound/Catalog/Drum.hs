@@ -18,6 +18,9 @@ import Csound.Base
 
 -- subtractive 
 
+bpb :: Sig -> Sig -> Sig -> Sig
+bpb cfq q asig = balance (bp cfq q asig) asig
+
 -- | A \"dumb\" drum.
 dumb :: SE Sig
 dumb = fmap (bpb 1000 100) $ rand $ expseg [0.0001, 0.01, 1, 0.04, 0.01]
