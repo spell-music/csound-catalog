@@ -1,5 +1,5 @@
 Name:          csound-catalog
-Version:       0.2.0
+Version:       0.2.1
 Cabal-Version: >= 1.6
 License:       BSD3
 License-file:  LICENSE
@@ -27,7 +27,7 @@ Source-repository head
 Library
   Ghc-Options:    -Wall
   Build-Depends:
-        base >= 4, base < 5, transformers >= 0.3, csound-expression >= 4.0.0
+        base >= 4, base < 5, transformers >= 0.3, csound-expression >= 4.3
   Hs-Source-Dirs:      src/
   Exposed-Modules:
         Csound.Catalog

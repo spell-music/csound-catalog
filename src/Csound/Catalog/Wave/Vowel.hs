@@ -47,7 +47,7 @@ vowels = vowelsBy mkEnv
 loopVowels :: D -> Sig -> [(Vowel, D)] -> Sig -> Sig
 loopVowels maxDur xdur params = vowelsBy mkEnv maxDur params lastVowel
     where 
-        mkEnv xs x = loopseg (1 / xdur) 0 0 ((++ [sig x]) $ (\(a, b) -> [sig a, sig b]) =<< xs)
+        mkEnv xs x = loopseg ((++ [sig x]) $ (\(a, b) -> [sig a, sig b]) =<< xs) (1 / xdur)
         lastVowel = fst $ head params
 
 -- | Generic construcotr for the signals that interpolate between vowel sounds.

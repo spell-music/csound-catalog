@@ -127,8 +127,8 @@ harpsichord cps = 0.5 * asignal
 xing :: D -> Sig -> Sig
 xing xdur cps = asignal
     where
-        amps xs dt vib freq phs = ar (loopseg (sig $ 1/xdur) 0 0 xs) * (1 + poscil vibEnv freq sine `withD` phs)
-            where vibEnv = ar $ loopseg (sig $ 1/xdur) 0 0 [0, dt, vib, sig xdur - dt, 0]
+        amps xs dt vib freq phs = ar (loopseg xs (sig $ 1/xdur)) * (1 + poscil vibEnv freq sine `withD` phs)
+            where vibEnv = ar $ loopseg [0, dt, vib, sig xdur - dt, 0] (sig $ 1/xdur)
 
         f vol freq = poscil vol (sig freq * cps) sine
 
@@ -166,8 +166,8 @@ fmMod xdur cps = asignal
         ishift      = 4 / 12000
         ipch        = cps
         ioct        = octcps cps
-        amodi       = ar $ loopseg (sig $ 1 / xdur) 0 0 [0, iattack, 5, sig xdur, 2, irelease, 0]
-        amodr       = ar $ loopseg (sig $ 0.5 / xdur) 0 0 [ip6, 1, ip7, 1, ip6]
+        amodi       = ar $ loopseg [0, iattack, 5, sig xdur, 2, irelease, 0] (sig $ 1 / xdur) 
+        amodr       = ar $ loopseg [ip6, 1, ip7, 1, ip6] (sig $ 0.5 / xdur) 
         a1          = amodi * (amodr - 1 / amodr) / 2
         a2          = amodi * (amodr + 1 / amodr) / 2
         a1ndx       = abs $ a1 / 10
@@ -185,7 +185,7 @@ fmMod xdur cps = asignal
 filteredChorus :: D -> Sig -> Sig
 filteredChorus xdur cps = asignal
     where 
-        a ~~ b = loopseg (sig $ 1 / (xdur * 2)) 0 0 [sig a, 1, sig b, 1, sig a]
+        a ~~ b = loopseg [sig a, 1, sig b, 1, sig a] (sig $ 1 / (xdur * 2))
         filt cf1 bw1 cf2 bw2 x = balance (bp cf2 bw2 $ bp cf1 bw1 x) x
         harm fqc = poscil ((sig $ idb)) fqc $ sines 
                             [ 0.28, 1, 0.74, 0.66, 0.78, 0.48, 0.05, 0.33, 0.12
@@ -268,7 +268,7 @@ delayedString cps = asignal
 melody :: D -> Sig -> SE Sig
 melody xdur cps = do
     k1000 <- randi 1 10
-    let k100 = cps + loopseg (sig $ 1/xdur) 0 0 [0, 0.5, 1, sig xdur, 1] * poscil 1 (5 + k1000) sine
+    let k100 = cps + loopseg [0, 0.5, 1, sig xdur, 1] (sig $ 1/xdur) * poscil 1 (5 + k1000) sine
         -- a1-3 are for cheby with p6=1-4
         a1   = poscil k1 k100 (sines [1, 0.4, 0.2, 0.1, 0.1, 0.05])
         a2   = tablei a1 ip6 `withDs` [1, 0.5]

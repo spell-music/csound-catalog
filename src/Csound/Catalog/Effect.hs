@@ -141,7 +141,7 @@ sweepFilter dur start end bandWidth = bp centerFreq bandWidth
 -- > sweepFilter dur startCps endCps bandWidth asignal
 loopSweepFilter :: D -> D -> D -> Sig -> Sig -> Sig
 loopSweepFilter dur start end bandWidth = bp centerFreq bandWidth
-    where centerFreq = oscLine start end (sig dur)
+    where centerFreq = loopseg [sig start, 1, sig end, 1, sig start] (1 / sig dur)
 
 -- | The effect that was used in the piece \"Bay at night\".
 bayAtNight :: Sig -> SE (Sig, Sig)
