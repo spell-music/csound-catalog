@@ -122,8 +122,8 @@ bassEnhancment cfq k asig = sig k * butlp asig (sig cfq) + asig
 -- @n@ is a number of filters, k - is scale of the signals that is passed through each delay line).
 delayLine :: Int -> D -> D -> Sig -> (Sig, Sig)
 delayLine n k dt asig = (mean $ asig : odds asigs, mean $ asig : evens asigs)
-    where phi x = delay (x * sig k) dt
-          asigs = take n $ iterate phi (delay asig dt)
+    where phi x = delaySig dt (x * sig k)
+          asigs = take n $ iterate phi (delaySig dt asig)
 
 -- | Adds a very short fade in to remove the click at the beggining of the note.
 declick :: Sig -> Sig
