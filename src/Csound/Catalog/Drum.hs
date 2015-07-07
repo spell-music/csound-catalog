@@ -141,9 +141,9 @@ handClap cps = fmap onNoise $ rand 1
                 anoise2 = kenv2 * asig
 
                 adel1   = anoise1
-                adel2   = delaySnd 0.01 anoise1
-                adel3   = delaySnd 0.02 anoise1
-                adel4   = delaySnd 0.03 anoise2
+                adel2   = delay anoise1 0.01
+                adel3   = delay anoise1 0.02
+                adel4   = delay anoise2 0.03
             
                 aout    = mean
                     [ rz adel1 2
