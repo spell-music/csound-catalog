@@ -32,6 +32,9 @@ Library
   Exposed-Modules:
         Csound.Catalog
         Csound.Catalog.Drum
+        Csound.Catalog.Drum.Hm
+        Csound.Catalog.Drum.Tr808
+        Csound.Catalog.Drum.MiniPops
         Csound.Catalog.Effect
         Csound.Catalog.Envelope
         Csound.Catalog.Reson

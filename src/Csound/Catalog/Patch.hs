@@ -27,7 +27,7 @@ module Csound.Catalog.Patch(
 
 	-- * Choir
 	choirA, choirO, choirU, choirE,
-	choirA', choirO', choirU', choirE',
+	Choir(..), choirA', choirO', choirU', choirE',
 
 	windSings, noisyChoir, longNoisyChoir, noisyChoir', longNoisyChoir', NoisyChoir(..),
 
