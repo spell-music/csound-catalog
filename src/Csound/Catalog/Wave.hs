@@ -59,8 +59,38 @@ module Csound.Catalog.Wave(
     maleA, maleE, maleIY, maleO, maleOO, maleU, maleER, maleUH,
     femaleA, femaleE, femaleIY, femaleO, femaleOO,
 
+    -- * Sean Costello
+    RissetBellSpec(..), rissetBell, timpani, timpaniSpec, noiseBell, noiseBellSpec,
+    snowCrackle, 
+    fmDrone, fmDrones,
+    tenorOsc, sopranoOsc,
+
+    -- * Flavio
+    amFlavio, fmFlavio, simpleSust, simpleFading,
+
+    -- * Thor
+    cathedralOrgan, cathedralOrganFx, hammondOrgan,
+
+    amPiano, 
+
+    pwBass, pwHarpsichord, pwEnsemble,
+
+    simpleBass, 
+
+    EpianoOsc(..), epiano, 
+
+    noisyChoir, thorWind, mildWind, boom, windWall, 
+
+    razorPad, razorLead,
+
+    -- * Bitwig
+
+    pwPad, triPad, triPadFx, 
+    Accordeon(..), accordeon, accordeonFx,
+
     -- * Other instruments
     okComputer
+
 ) where
 
 import Csound.Base
@@ -73,6 +103,11 @@ import Csound.Catalog.Wave.Woodwind
 import Csound.Catalog.Wave.Deserted
 import Csound.Catalog.Wave.TheHeartbeat
 import Csound.Catalog.Wave.TrappedInConvert
+
+import Csound.Catalog.Wave.Sean
+import Csound.Catalog.Wave.Flavio
+import Csound.Catalog.Wave.Thor
+import Csound.Catalog.Wave.Bitwig
 
 import Csound.Catalog.Wave.Misc
 

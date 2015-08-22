@@ -12,7 +12,7 @@ module Csound.Catalog
     , module Csound.Catalog.Effect
     , module Csound.Catalog.Envelope
     , module Csound.Catalog.Reson
-    , module Csound.Catalog.Wave
+    , module Csound.Catalog.Wave    
     ) where 
 
 import Csound.Catalog.Drum
