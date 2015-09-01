@@ -39,7 +39,7 @@ Library
         Csound.Catalog.Envelope
         Csound.Catalog.Reson
         Csound.Catalog.Wave
-        Csound.Catalog.Patch
+        Csound.Patch
   Other-Modules:
         Csound.Catalog.Wave.Woodwind
         Csound.Catalog.Wave.WoodwindAlg     
