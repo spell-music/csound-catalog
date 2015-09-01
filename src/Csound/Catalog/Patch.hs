@@ -129,6 +129,12 @@ import Csound.Catalog.Wave(Accordeon(..))
 
 import Data.Char
 
+fx1 :: Sig -> (a -> a) -> [FxSpec a]
+fx1 dw f = [FxSpec dw (return . f)]
+
+fx1' :: Sig -> (a -> SE a) -> [FxSpec a]
+fx1' dw f = [FxSpec dw f]
+
 ----------------------------------------------
 -- electric pianos
 
@@ -142,14 +148,11 @@ epiano1 = epiano1' def
 
 epiano1' (Epiano1 rel) = Patch 
 	{ patchInstr = \a -> mul 0.45 $ C.simpleFading rel a
-	, patchFx    = return . largeHall2
-	, patchMix    = 0.25
-	}
+	, patchFx    = fx1 0.25 largeHall2 }
 
 data MutedPiano = MutedPiano 
 	{ mutedPianoMute :: Sig
-	, mutedPianoRel  :: D
-	}
+	, mutedPianoRel  :: D }
 
 instance Default MutedPiano where
 	def = MutedPiano 0.5 7
@@ -158,39 +161,27 @@ mutedPiano = mutedPiano' def
 
 mutedPiano' (MutedPiano mute rel) = Patch 
 	{ patchInstr = \a -> mul 0.8 $ C.simpleSust rel a
-	, patchFx    = return . largeHall2 . at (mlp3 (250 + 7000 * mute) 0.2)
-	, patchMix    = 0.25
-	}
+	, patchFx    = fx1 0.25 (largeHall2 . at (mlp3 (250 + 7000 * mute) 0.2)) }
 
 amPiano = Patch
 	{ patchInstr = mul 2 . onCps C.amPiano
-	, patchFx    = return
-	, patchMix    = 0.25
-	}
+	, patchFx    = fx1 0.25 id }
 
 fmPiano = Patch
-	{  patchInstr = at fromMono . onCps (C.fmFlavio 6 3)
-	, patchFx     = return . smallHall2
-	, patchMix    = 0.15
-	}
+	{ patchInstr = at fromMono . onCps (C.fmFlavio 6 3)
+	, patchFx    = fx1 0.15 smallHall2 }
 
 epiano2 = Patch 
 	{ patchInstr = mul 1.5 . at fromMono . (onCps $ C.epiano [C.EpianoOsc 4 5 1 1, C.EpianoOsc 8 10 2.01 1])
-	, patchFx    = return . smallHall2
-	, patchMix    = 0.25
-	}
+	, patchFx    = fx1 0.25 smallHall2 }
 
 epianoHeavy = Patch 
 	{ patchInstr = mul 1.5 . at fromMono . (onCps $ C.epiano [C.EpianoOsc 4 5 1 1, C.EpianoOsc 8 10 2.01 1, C.EpianoOsc 8 15 0.5 0.5])
-	, patchFx    = return . smallHall2
-	, patchMix    = 0.2
-	}
+	, patchFx    = fx1 0.2 smallHall2 }
 
 epianoBright = Patch 
 	{ patchInstr = mul 1.5 . at fromMono . (onCps $ C.epiano [C.EpianoOsc 4 5 1 1, C.EpianoOsc 8 10 3.01 1, C.EpianoOsc 8 15 5 0.5, C.EpianoOsc 8 4 7 0.3])
-	, patchFx    = return . smallHall2
-	, patchMix    = 0.2
-	}
+	, patchFx    = fx1 0.2 smallHall2 }
 
 vibraphonePiano1 = smallVibraphone1 { patchInstr = mul (1.5 * fadeOut 0.25) . at (mlp 6500 0.1). patchInstr smallVibraphone1 }
 vibraphonePiano2 = smallVibraphone2 { patchInstr = mul (1.5 * fadeOut 0.25) . at (mlp 6500 0.1). patchInstr smallVibraphone2 }
@@ -200,9 +191,7 @@ vibraphonePiano2 = smallVibraphone2 { patchInstr = mul (1.5 * fadeOut 0.25) . at
 
 cathedralOrgan = Patch
 	{ patchInstr = at fromMono . mul 1.2 . onCps C.cathedralOrgan
-	, patchFx    = return . largeHall2
-	, patchMix   = 0.27
-	}
+	, patchFx    = fx1 0.27 largeHall2 }
 
 -- [0, 30]
 data HammondOrgan = HammondOrgan 
@@ -215,15 +204,11 @@ hammondOrgan = hammondOrgan' def
 
 hammondOrgan' (HammondOrgan detune) = Patch
 	{ patchInstr = mul 0.8 . at fromMono . onCps (C.hammondOrgan detune)
-	, patchFx    = return . smallRoom2
-	, patchMix   = 0.15
-	}
+	, patchFx    = fx1 0.15 smallRoom2 }
 
 toneWheelOrgan = Patch
 	{ patchInstr = at fromMono  . mul 1.2 . onCps C.toneWheel
-	, patchFx    = return . smallHall2
-	, patchMix   = 0.3
-	}
+	, patchFx    = fx1 0.3 smallHall2 }
 
 sawOrgan = waveOrgan rndSaw
 triOrgan = waveOrgan rndTri
@@ -233,8 +218,7 @@ pwOrgan k = waveOrgan (rndPw k)
 waveOrgan :: (Sig -> SE Sig) -> Patch2 
 waveOrgan wave = Patch 
 	{ patchInstr = onCps $ at fromMono . mul (fades 0.01 0.01) . at (mlp 3500 0.1) . wave
-	, patchFx    = return . smallHall2
-	, patchMix   = 0.25
+	, patchFx    = fx1 0.25 smallHall2	
 	}
 
 ----------------------------------------------
@@ -250,9 +234,7 @@ brokenAccordeon = accordeon' (C.Accordeon 1 1.07 2.02 0.5)
 
 accordeon' spec = Patch
 	{ patchInstr = mul 1.2 . onCps (C.accordeon spec)
-	, patchFx    = C.accordeonFx
-	, patchMix   = 0.25
-	}
+	, patchFx    = fx1' 0.25 C.accordeonFx }
 
 ----------------------------------------------
 -- choir
@@ -264,15 +246,11 @@ instance Default Choir where
 
 tenor' filt (Choir vib) = Patch 
 	{ patchInstr = at fromMono . mul 0.3 . onCps (C.tenorOsc filt vib)
-	, patchFx    = return . smallHall2
-	, patchMix   = 0.25
-	}
+	, patchFx    = fx1 0.25 smallHall2 }
 
 soprano' filt (Choir vib) = Patch 
 	{ patchInstr = at fromMono . mul 0.3 . onCps (C.sopranoOsc filt vib)
-	, patchFx    = return . smallHall2
-	, patchMix   = 0.25
-	}
+	, patchFx    = fx1 0.25 smallHall2 }
 
 choir' filt vib = Patch
 	{ patchInstr = \(amp, cps) -> do
@@ -280,8 +258,7 @@ choir' filt vib = Patch
 			when1 (sig cps <=* 220) $ writeSERef ref =<< (patchInstr (tenor'   filt vib) (amp, cps))
 			when1 (sig cps >*  220) $ writeSERef ref =<< (patchInstr (soprano' filt vib) (amp, cps))
 			readSERef ref
-	, patchFx   = return . smallHall2 
-	, patchMix   = 0.25 
+	, patchFx   = fx1 0.25 smallHall2 	
 	}
 
 choirA = choirA' def
@@ -310,11 +287,9 @@ noisyChoir = noisyChoir' def
 
 longNoisyChoir' (NoisyChoir n bw) = Patch
 	{ patchInstr = at fromMono . onCps (C.noisyChoir n bw)
-	, patchFx    = return . magicCave2
-	, patchMix   = 0.15
-	}
+	, patchFx    = fx1 0.15 magicCave2 }
 
-noisyChoir' ch = (longNoisyChoir' ch) { patchFx    = return . largeHall2 }
+noisyChoir' ch = (longNoisyChoir' ch) { patchFx  = fx1 0.15 largeHall2 }
 
 -- modes (wth delay or not delay)
 --
@@ -334,59 +309,41 @@ deepPad = harmonPatch (fmap (* 0.75) [1, 0.5]) [1, 0.5]
 
 pwPad = Patch
 	{ patchInstr = mul 1.2 . at fromMono . onCps C.pwPad
-	, patchFx    = return . smallHall2
-	, patchMix   = 0.25
-	}
+	, patchFx    = fx1 0.25 smallHall2 }
 
 triPad = Patch 
 	{ patchInstr = fmap fromMono . onCps C.triPad
-	, patchFx  = C.triPadFx
-	, patchMix = 0.25 }
+	, patchFx  = fx1' 0.25 C.triPadFx }
 
 nightPad = Patch
 	{ patchInstr = mul 0.8 . at fromMono . onCps (mul (fadeOut 1) . C.nightPad 0.5)
-	, patchFx    = return . largeHall2
-	, patchMix   = 0.25
-	}
+	, patchFx    = fx1 0.25 largeHall2 }
 
 overtonePad = Patch
 	{ patchInstr = mul 1.2 . at fromMono . mixAt 0.25 (mlp 1500 0.1) . onCps (\cps -> mul (fades 0.25 1.2) (C.tibetan 11 0.012 cps) + mul (fades 0.25 1) (C.tibetan 13 0.015 (cps * 0.5)))
-	, patchFx    = return . smallHall2
-	, patchMix   = 0.35
-	}
+	, patchFx    = fx1 0.35 smallHall2 }
 
-caveOvertonePad = overtonePad { patchFx    = return . magicCave2 . mul 0.8, patchMix   = 0.2 }
+caveOvertonePad = overtonePad { patchFx = fx1 0.2 (magicCave2 . mul 0.8) }
 
 chorusel = Patch
 	{ patchInstr = mul 1.2 . at (mlp (3500 + 2000 * uosc 0.1) 0.1) . onCps (mul (fades 0.65 1) . C.chorusel 13 0.5 10)
-	, patchFx    = return . smallHall2
-	, patchMix   = 0.35
-	}
+	, patchFx    = fx1 0.35 smallHall2 }
 
 pwEnsemble = Patch
 	{ patchInstr = at fromMono . onCps C.pwEnsemble
-	, patchFx    = return . smallHall2
-	, patchMix   = 0.25
-	}
+	, patchFx    = fx1 0.25 smallHall2 }
 
 fmDroneSlow = Patch
 	{ patchInstr = at fromMono . onCps (C.fmDrone 3 (10, 5))
-	, patchFx    = return . largeHall2
-	, patchMix   = 0.35
-	}
+	, patchFx    = fx1 0.35 largeHall2 }
 
 fmDroneMedium = Patch
 	{ patchInstr = at fromMono . onCps (C.fmDrone 3 (5, 3))
-	, patchFx    = return . smallHall2
-	, patchMix   = 0.25
-	}
+	, patchFx    = fx1 0.25 smallHall2 }
 
 fmDroneFast = Patch
 	{ patchInstr = at fromMono . onCps (C.fmDrone 3 (0.5, 1))
-	, patchFx    = return . smallHall2
-	, patchMix   = 0.25
-	}
- 
+	, patchFx    = fx1 0.25 smallHall2 } 
 
 vibrophonePad = largeVibraphone1 { patchInstr = mul (2 * fades 0.5 0.25) . at (mlp 2500 0.1). patchInstr largeVibraphone1 }
 
@@ -403,18 +360,14 @@ razorPad = razorPad' def
 
 razorPad' (RazorPad speed) = Patch
 	{ patchInstr = at fromMono . onCps (uncurry $ C.razorPad speed)
-	, patchFx    = return . largeHall2
-	, patchMix   = 0.35
-	}
+	, patchFx    = fx1 0.35 largeHall2 }
 
 ------------------------------------
 -- leads
 
 phasingLead = Patch
 	{ patchInstr = at fromMono . mul (fadeOut 0.05) . onCps (uncurry C.phasingSynth)
-	, patchFx    = return . smallHall2
-	, patchMix   = 0.25
-	}
+	, patchFx    = fx1 0.25 smallHall2 }
 
 data RazorLead = RazorLead 
 	{ razorLeadBright :: Sig 
@@ -431,9 +384,7 @@ razorLead = razorLead' def
 
 razorLead' (RazorLead bright speed) = Patch
 	{ patchInstr = at fromMono . (\(amp, cps) -> mul (fadeOut (0.05 + amp * 0.3)) $ C.razorLead (bright * sig amp) (speed * sig amp) (sig amp) (sig cps))
-	, patchFx    = return . smallHall2
-	, patchMix   = 0.35
-	}
+	, patchFx    = fx1 0.35 smallHall2 }
 
 overtoneLeadFx :: Sig2 -> SE Sig2
 overtoneLeadFx x = fmap magicCave2 $ mixAt 0.2 (echo 0.25 0.45) (return x)
@@ -441,39 +392,29 @@ overtoneLeadFx x = fmap magicCave2 $ mixAt 0.2 (echo 0.25 0.45) (return x)
 overtoneLead :: Patch2
 overtoneLead = Patch
 	{ patchInstr = mul 0.8 . at fromMono . onCps (mul (fades 0.01 1) . C.tibetan 13 0.012)
-	, patchFx    = overtoneLeadFx
-	, patchMix   = 0.15
-	}
+	, patchFx    = fx1' 0.15 overtoneLeadFx }
 
 ------------------------------------
 -- bass
 
 simpleBass = Patch 
 	{ patchInstr = at fromMono . onCps C.simpleBass
-	, patchFx    = return . smallRoom2
-	, patchMix   = 0.25
-	}
+	, patchFx    = fx1 0.25 smallRoom2 }
 
 pwBass = Patch 
 	{ patchInstr = at fromMono . onCps C.pwBass
-	, patchFx    = return . smallHall2
-	, patchMix   = 0.25
-	}
+	, patchFx    = fx1 0.25 smallHall2 }
 
 ------------------------------------
 -- plucked
 
 guitar = Patch
 	{ patchInstr = onCps $ fromMono . mul (fades 0.01 0.25) . C.plainString
-	, patchFx    = return . smallHall2
-	, patchMix   = 0.25
-	}
+	, patchFx    = fx1 0.25 smallHall2 }
 
 harpsichord = Patch
 	{ patchInstr = onCps $ fromMono . mul (fades 0.01 0.13) . C.harpsichord
-	, patchFx    = return . smallHall2
-	, patchMix   = 0.25
-	}
+	, patchFx    = fx1 0.25 smallHall2 }
 
 -- guita
 
@@ -499,9 +440,7 @@ instance Default Strike where
 strike' :: Strike -> (Sig -> Sig) -> Patch Sig2
 strike' spec instr = Patch 
 	{ patchInstr =  \x@(amp, cps) -> return $ fromMono $ mul (sig amp * fadeOut (rel x)) $ instr (sig cps)
-	, patchFx    = strikeFx spec
-	, patchMix   = 0.25
-	}
+	, patchFx    = fx1' 0.25 (strikeFx spec) }
 	where rel a = strikeRelease a spec
 
 
@@ -710,18 +649,15 @@ scrapeRelease (amp, cps) rel = (0.85 * rel * amp) * amp + rel - (cps / 10000)
 
 scrapeFast k m = Patch 
 	{ patchInstr = \x@(amp, cps) -> (mul (sig amp * k * fades 0.02 (scrapeRelease x 0.25)) . at fromMono . C.scrapeModes m) (sig cps)
-	, patchFx    = return . largeHall2
-	, patchMix   = 0.15 }
+	, patchFx    = fx1 0.15 largeHall2 }
 
 scrape k m = Patch 
 	{ patchInstr = \x@(amp, cps) -> (mul (sig amp * k * fades 0.5 (scrapeRelease x 0.97)) . at fromMono . C.scrapeModes m) (sig cps)
-	, patchFx    = return . largeHall2
-	, patchMix   = 0.15 }
+	, patchFx    = fx1 0.15 largeHall2 }
 
 scrapePad k m = Patch 
 	{ patchInstr = \x@(amp, cps) -> (mul (sig amp * k * fades 0.5 (scrapeRelease x 2.27	)) . at fromMono . C.scrapeModes m) (sig cps)
-	, patchFx    = return . largeHall2
-	, patchMix   = 0.15 }
+	, patchFx    = fx1 0.15 largeHall2 }	
 
 scaleScrapeDahina = 1.32
 scaleScrapeBanyan = 0.95
@@ -819,8 +755,7 @@ data Wind = Wind
 	, windDec :: D
 	, windSus :: D	
 	, windVib :: D	
-	, windBright :: D
-	}
+	, windBright :: D }
 
 woodWind' spec instr = Patch 
 	{ patchInstr = \(amp, cps) -> mul 1.3 $ do 
@@ -828,9 +763,7 @@ woodWind' spec instr = Patch
 		vibDisp <- rnd (0.1 * amp)
 		let dispVib vib = vib * (0.9 + vibDisp)		
 		return $ fromMono $ mul (sig amp * fadeOut (windDec spec)) $ instr seed (dispVib $ windVib spec) (windAtt spec) (windSus spec) (windDec spec) (0.4 + 0.75 * windBright spec * amp) cps
-	, patchFx = return . smallHall2
-	, patchMix = 0.25
-	}
+	, patchFx    = fx1 0.25 smallHall2 }
 
 -- flute
 
@@ -839,16 +772,14 @@ fluteSpec bright vib = Wind
 	, windDec = 0.1
 	, windSus = 20
 	, windVib = vib
-	, windBright = bright
-	}
+	, windBright = bright }
 
 shortFluteSpec bright vib = Wind 
 	{ windAtt = 0.03
 	, windDec = 0.05
 	, windSus = 20
 	, windVib = vib
-	, windBright = bright
-	}
+	, windBright = bright }
 
 flute = woodWind' (fluteSpec br vib) C.flute
 	where 
@@ -882,16 +813,14 @@ bassClarinetSpec bright vib = Wind
 	, windDec = 0.15
 	, windSus = 20
 	, windVib = vib
-	, windBright = bright
-	}
+	, windBright = bright }
 
 shortBassClarinetSpec bright vib = Wind 
 	{ windAtt = 0.03
 	, windDec = 0.04
 	, windSus = 20
 	, windVib = vib
-	, windBright = bright
-	}
+	, windBright = bright }
 
 bassClarinet = woodWind' (bassClarinetSpec br vib) C.bassClarinet
 	where 
@@ -925,16 +854,14 @@ frenchHornSpec bright vib = Wind
 	, windDec = 0.25
 	, windSus = 20
 	, windVib = vib
-	, windBright = bright
-	}
+	, windBright = bright }
 
 shortFrenchHornSpec bright vib = Wind 
 	{ windAtt = 0.03
 	, windDec = 0.04
 	, windSus = 20
 	, windVib = vib
-	, windBright = bright
-	}
+	, windBright = bright }
 
 frenchHorn = woodWind' (frenchHornSpec br vib) C.frenchHorn
 	where 
@@ -968,16 +895,14 @@ shengSpec bright vib = Wind
 	, windDec = 0.2
 	, windSus = 20
 	, windVib = vib
-	, windBright = bright
-	}
+	, windBright = bright }
 
 shortShengSpec bright vib = Wind 
 	{ windAtt = 0.03
 	, windDec = 0.04
 	, windSus = 20
 	, windVib = vib
-	, windBright = bright
-	}
+	, windBright = bright }
 
 sheng = woodWind' (shengSpec br vib) C.sheng
 	where 
@@ -1011,16 +936,14 @@ hulusiSpec bright vib = Wind
 	, windDec = 0.14
 	, windSus = 20
 	, windVib = vib
-	, windBright = bright
-	}
+	, windBright = bright }
 
 shortHulusiSpec bright vib = Wind 
 	{ windAtt = 0.03
 	, windDec = 0.04
 	, windSus = 20
 	, windVib = vib
-	, windBright = bright
-	}
+	, windBright = bright }
 
 hulusi = woodWind' (hulusiSpec br vib) C.hulusi
 	where 
@@ -1055,16 +978,14 @@ diziSpec bright vib = Wind
 	, windDec = 0.2
 	, windSus = 20
 	, windVib = vib
-	, windBright = bright
-	}
+	, windBright = bright }
 
 shortDiziSpec bright vib = Wind 
 	{ windAtt = 0.1
 	, windDec = 0.04
 	, windSus = 20
 	, windVib = vib
-	, windBright = bright
-	}
+	, windBright = bright }
 
 dizi = woodWind' (diziSpec br vib) C.dizi
 	where 
@@ -1096,105 +1017,73 @@ brightDizi = woodWind' (shortDiziSpec br vib) C.dizi
 
 pulseWidth = Patch
 	{ patchInstr = mul 0.75 . at fromMono . mul (fades 0.07 0.1). onCps (uncurry C.pulseWidth)
-	, patchFx    = return . smallHall2
-	, patchMix   = 0.15
-	}
+	, patchFx    = fx1 0.15 smallHall2 }	
 
 xanadu = Patch
 	{ patchInstr = mul 1.2 . at fromMono . mul (fades 0.01 2.2). onCps C.xanadu1
-	, patchFx    = return . largeHall2
-	, patchMix   = 0.27
-	}
+	, patchFx    = fx1 0.27 largeHall2 }
 
 alienIsAngry =  Patch
 	{ patchInstr = at fromMono . mul (fades 0.01 2.3). onCps (C.fmMod 5)
-	, patchFx    = return . smallRoom2
-	, patchMix   = 0.15
-	}
+	, patchFx    = fx1 0.15 smallRoom2 }
 
 noiz =  Patch
 	{ patchInstr = at fromMono . mul (3 * fades 0.01 0.5). onCps C.noiz
-	, patchFx    = return . smallHall2
-	, patchMix   = 0.15
-	}
+	, patchFx    = fx1 0.15 smallHall2 }
 
 blue = Patch
 	{ patchInstr = at fromMono . mul (3 * fades 0.01 0.5). onCps (C.blue 5 7 0.24 12)
-	, patchFx    = return . smallHall2
-	, patchMix   = 0.25
-	}
+	, patchFx    = fx1 0.25 smallHall2 }	
 
 black = Patch
 	{ patchInstr = at fromMono . mul (3 * fades 0.01 0.5). onCps (\cps -> C.black 3 (cps / 2) (cps * 2) 12 (sig cps))
-	, patchFx    = return . smallHall2
-	, patchMix   = 0.25
-	}
+	, patchFx    = fx1 0.25 smallHall2 }
 
 simpleMarimba = Patch
 	{ patchInstr = at fromMono . mul (1.25 * fades 0.01 0.5). onCps (C.simpleMarimba 5)
-	, patchFx    = return . smallHall2
-	, patchMix   = 0.25
-	}
-
+	, patchFx    = fx1 0.25 smallHall2 }
+	
 okComputer = Patch
 	{ patchInstr = \(amp, cps) -> (at fromMono . mul (sig amp * fades 0.01 0.01) . at (mlp (1500 + sig amp * 8500) 0.1) . (C.okComputer . (/ 25))) (sig cps)
-	, patchFx    = return 
-	, patchMix   = 0.25
-	}
+	, patchFx    = fx1 0.25 id }
 
 snowCrackle = Patch
 	{ patchInstr = \(amp, cps) -> (return . fromMono . mul (sig amp * fades 0.001 0.001) . (C.snowCrackle . (/ 25))) (sig cps)
-	, patchFx    = return 
-	, patchMix   = 0.25
-	}
+	, patchFx    = fx1 0.25 id }
 
 noiseBell = Patch 
 	{ patchInstr = at fromMono . onCps (C.noiseBell (31, 125) 2.3 0.2 . ( * 8))
-	, patchFx    = return . smallHall2
-	, patchMix   = 0.25 }
-
-
+	, patchFx    = fx1 0.25 smallHall2 }
+	
 ------------------------------------
 -- vowels
 
 robotVowels vows latVow = Patch
 	{ patchInstr = at fromMono . mul (fades 0.1 0.1). onCps (C.vowels 25 vows latVow)
-	, patchFx    = return . smallHall2
-	, patchMix   = 0.15
-	}
+	, patchFx    = fx1 0.15 smallHall2 }
 
 robotLoopVowels loopDur vows = Patch
 	{ patchInstr = at fromMono . mul (fades 0.1 0.1). onCps (C.loopVowels 25 loopDur vows)
-	, patchFx    = return . smallHall2
-	, patchMix   = 0.15
-	}
+	, patchFx    = fx1 0.15 smallHall2 }
 
 robotVowel vow = Patch
 	{ patchInstr = at fromMono . mul (fades 0.1 0.1). onCps (C.oneVowel 25 vow)
-	, patchFx    = return . smallHall2
-	, patchMix   = 0.15
-	}
+	, patchFx    = fx1 0.15 smallHall2 }
 
 ------------------------------------
 -- nature / effects
 
 windWall = Patch
 	{ patchInstr = at fromMono . mul (1.25 * fades 0.1 5). onCps C.windWall
-	, patchFx    = return . largeHall2
-	, patchMix   = 0.25
-	}
+	, patchFx    = fx1 0.25 largeHall2 }
 
 mildWind = Patch
 	{ patchInstr = at fromMono . mul (1.25 * fades 0.1 1.5). onCps C.mildWind
-	, patchFx    = return . largeHall2
-	, patchMix   = 0.25
-	}
+	, patchFx    = fx1 0.25 largeHall2 }
 
 wind = Patch
 	{ patchInstr = at fromMono . mul (0.7 * fades 0.1 1.5). onCps (\cps -> C.thorWind (cps * 2) 150 (0.3, 1))
-	, patchFx    = return . largeHall2
-	, patchMix   = 0.25
-	}
+	, patchFx    = fx1 0.25 largeHall2 }
 
 ------------------------------------
 -- drums
