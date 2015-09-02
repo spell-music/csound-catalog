@@ -12,13 +12,25 @@ module Csound.Catalog.Drum.Tr808(
 	maraca', marSpec, highConga', hcSpec, midConga', mcSpec, lowConga', lcSpec,
 
 	-- * Metronome
-	ticks, nticks
+	ticks, nticks,
+
+	-- * Sampler
+	bd, sn, ohh, chh, htom, mtom, ltom, cym, cl, rim, mar, hcon, mcon, lcon,
+
+	-- ** Generic
+	bd', sn', ohh', chh', htom', mtom', ltom', cym', cl', rim', mar', hcon', mcon', lcon'
 
 ) where
 
 import Csound.Base
+import Csound.Sam
 
 -- don't forget to update the gen-opcodes and the hackage opcodes
+
+rndAmp :: Sig -> SE Sig
+rndAmp a = do
+	k <- birnd 0.09
+	return $ a * (1 + sig k)
 
 data TrSpec = TrSpec {
 	  trDur 	:: D
@@ -31,7 +43,7 @@ cpsSpec cps = TrSpec
 	{ trDur   = 0.8
 	, trTune  = 0
 	, trCps   = cps 
-	, trRnd   = Just 0.05 }
+	, trRnd   = Just 0.085 }
 
 
 rndVal :: D -> D -> D -> SE D
@@ -71,7 +83,7 @@ bass = bass' bdSpec
 bass' spec = pureBass' =<< rndSpec spec
 
 pureBass' :: TrSpec -> SE Sig
-pureBass' spec = addDur amix
+pureBass' spec = rndAmp =<< addDur amix
 	where
 		dur = trDur spec
 		cps = trCps spec
@@ -96,7 +108,7 @@ snare' spec = pureSnare' =<< rndSpec spec
 
 -- sound consists of two sine tones, an octave apart and a noise signal		
 pureSnare' :: TrSpec -> SE Sig
-pureSnare' spec = addDur =<< (apitch + anoise)
+pureSnare' spec = rndAmp =<< addDur =<< (apitch + anoise)
 	where	
 		dur 	= trDur  spec
 		tune    = trTune spec
@@ -135,7 +147,7 @@ closedHiHat' spec = genHiHat (expsega [1, (dur / 2), 0.001]) spec
 -- sound consists of 6 pulse oscillators mixed with a noise component
 -- cps = 296
 genHiHat :: Sig -> TrSpec -> SE Sig
-genHiHat pitchedEnv spec = addDur =<< (amix1 + anoise)
+genHiHat pitchedEnv spec = rndAmp =<< addDur =<< (amix1 + anoise)
 	where 	
 		dur 	= trDur  spec
 		tune    = trTune spec
@@ -175,7 +187,7 @@ lowTom' :: TrSpec -> SE Sig
 lowTom' = genTom 0.6 (40, 100, 600)
 
 genTom :: D -> (Sig, Sig, Sig) -> TrSpec -> SE Sig
-genTom durDt (resonCf, hpCf, lpCf) spec = addDur =<< (asig + anoise)
+genTom durDt (resonCf, hpCf, lpCf) spec = rndAmp =<< addDur =<< (asig + anoise)
 	where	
 		dur 	= trDur  spec
 		tune    = trTune spec
@@ -203,7 +215,7 @@ cymbal = cymbal' cymSpec
 -- sound consists of 6 pulse oscillators mixed with a noise component
 -- cps = 296
 cymbal' :: TrSpec -> SE Sig
-cymbal' spec = addDur =<< (fmap (amix1 + ) anoise)
+cymbal' spec = rndAmp =<< addDur =<< (fmap (amix1 + ) anoise)
 	where 
 		dur 	= trDur  spec
 		tune    = trTune spec
@@ -230,7 +242,7 @@ claves = claves' clSpec
 
 -- cps = 2500
 claves' :: TrSpec -> SE Sig
-claves' spec = addDur =<< asig
+claves' spec = rndAmp =<< addDur =<< asig
 	where
 		dur 	= trDur  spec
 		tune    = trTune spec
@@ -273,7 +285,7 @@ rimShot' spec = pureRimShot' =<< rndSpec spec
 
 -- cps = 1700
 pureRimShot' :: TrSpec -> SE Sig
-pureRimShot' spec = addDur =<< (mul 0.8 $ aring + anoise)
+pureRimShot' spec = rndAmp =<< addDur =<< (mul 0.8 $ aring + anoise)
 	where
 		dur 	= trDur  spec
 		tune    = trTune spec
@@ -299,7 +311,7 @@ cowbell = cowbell' cowSpec
 
 -- cps = 562
 cowbell' ::  TrSpec -> SE Sig
-cowbell' spec = addDur =<< ares
+cowbell' spec = rndAmp =<< addDur =<< ares
 	where
 		dur 	= trDur  spec
 		tune    = trTune spec
@@ -370,7 +382,7 @@ marSpec = cpsSpec 450
 maraca = maraca' marSpec
 
 maraca' ::  TrSpec -> SE Sig
-maraca' spec = addDur =<< anoise
+maraca' spec = rndAmp =<< addDur =<< anoise
 	where
 		dur 	= trDur  spec
 		tune    = trTune spec
@@ -405,7 +417,7 @@ lowConga' :: TrSpec -> SE Sig
 lowConga' = genConga 0.41
 
 genConga :: D -> TrSpec -> SE Sig
-genConga dt spec = addDur =<< asig
+genConga dt spec = rndAmp =<< addDur =<< asig
 	where
 		dur 	= trDur  spec
 		tune    = trTune spec
@@ -416,3 +428,99 @@ genConga dt spec = addDur =<< asig
 		aenv = transeg [0.7,1/ifrq,1,1,fullDur,-6,0.001]
 		afmod = expsega [3,0.25/ifrq,1]
 		asig = mul (-0.25 * aenv) $ rndOsc (sig ifrq * afmod)
+
+
+-----------------------------------------------------
+-- sampler
+
+mkSam = limSam 1
+
+bd :: Sam
+bd = mkSam bass
+
+sn :: Sam
+sn = mkSam snare
+
+ohh :: Sam
+ohh = mkSam openHiHat
+
+chh :: Sam
+chh = mkSam closedHiHat 
+
+htom :: Sam
+htom = mkSam highTom
+
+mtom :: Sam
+mtom = mkSam midTom
+
+ltom :: Sam
+ltom = mkSam lowTom
+
+cym :: Sam
+cym = mkSam cymbal
+
+cl :: Sam
+cl = mkSam claves
+
+rim :: Sam
+rim = mkSam rimShot
+
+mar :: Sam
+mar = mkSam maraca
+
+hcon :: Sam
+hcon = mkSam highConga
+
+mcon :: Sam
+mcon = mkSam midConga
+
+lcon :: Sam
+lcon = mkSam lowConga
+
+-- generic sam
+
+mkSam' f spec = mkSam $ f spec
+
+bd' :: TrSpec -> Sam
+bd' = mkSam' bass'
+
+sn' :: TrSpec -> Sam
+sn' = mkSam' snare'
+
+ohh' :: TrSpec -> Sam
+ohh' = mkSam' openHiHat'
+
+chh' :: TrSpec -> Sam
+chh' = mkSam' closedHiHat'
+
+htom' :: TrSpec -> Sam
+htom' = mkSam' highTom'
+
+mtom' :: TrSpec -> Sam
+mtom' = mkSam' midTom'
+
+ltom' :: TrSpec -> Sam
+ltom' = mkSam' lowTom'
+
+cym' :: TrSpec -> Sam
+cym' = mkSam' cymbal'
+
+cl' :: TrSpec -> Sam
+cl' = mkSam' claves'
+
+rim' :: TrSpec -> Sam
+rim' = mkSam' rimShot'
+
+mar' :: TrSpec -> Sam
+mar' = mkSam' maraca'
+
+hcon' :: TrSpec -> Sam
+hcon' = mkSam' highConga'
+
+mcon' :: TrSpec -> Sam
+mcon' = mkSam' midConga'
+
+lcon' :: TrSpec -> Sam
+lcon' = mkSam' lowConga'
+
+
