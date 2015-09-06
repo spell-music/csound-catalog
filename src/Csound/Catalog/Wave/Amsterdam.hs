@@ -3,6 +3,8 @@ module Csound.Catalog.Wave.Amsterdam(
     tibetan        
 ) where
 
+import Prelude hiding ((<*))
+
 import Csound.Base
 
 -- | Tibetan chant. It's a chorus of many sinusoids.

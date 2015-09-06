@@ -26,6 +26,8 @@ module Csound.Catalog.Reson(
     albertClockBellBelfastModes, woodBlockModes
 ) where
 
+import Prelude hiding ((<*))
+
 import Csound.Base
 
 -- | List of pairs of 

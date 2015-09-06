@@ -160,7 +160,7 @@ singleFx' = fx1'
 
 -- | Limits the release section of the note.
 limRel :: SigSpace a => D -> Patch a -> Patch a
-limRel rel p = p { patchInstr = mul (fadeOut rel) . patchInstr p }
+limRel rel p = p { patchInstr = fmap (mul (fadeOut rel)) . patchInstr p }
 
 ----------------------------------------------
 -- electric pianos
@@ -281,10 +281,10 @@ soprano' filt (Choir vib) = Patch
 
 choir' filt vib = Patch
 	{ patchInstr = \(amp, cps) -> do
-			ref <- newSERef (0 :: Sig2)
-			when1 (sig cps <=* 220) $ writeSERef ref =<< (patchInstr (tenor'   filt vib) (amp, cps))
-			when1 (sig cps >*  220) $ writeSERef ref =<< (patchInstr (soprano' filt vib) (amp, cps))
-			readSERef ref
+			ref <- newRef (0 :: Sig2)
+			when1 (sig cps <=* 220) $ writeRef ref =<< (patchInstr (tenor'   filt vib) (amp, cps))
+			when1 (sig cps >*  220) $ writeRef ref =<< (patchInstr (soprano' filt vib) (amp, cps))
+			readRef ref
 	, patchFx   = fx1 0.25 smallHall2 	
 	}
 

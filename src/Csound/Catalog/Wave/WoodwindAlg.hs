@@ -4,7 +4,10 @@ module Csound.Catalog.Wave.WoodwindAlg(
     woodwind                 
 ) where
 
+import Prelude hiding ((<*))
+
 import Data.List (transpose, intersperse)
+import Control.Monad
 import Control.Monad.Trans.State
 
 import Csound.Base hiding (fromSpec)
@@ -16,6 +19,10 @@ newtype Rnd a = Rnd { unRnd :: State D a }
 
 instance Functor Rnd where
     fmap f (Rnd a) = Rnd $ fmap f a
+
+instance Applicative Rnd where
+    pure = return
+    (<*>) = ap
 
 instance Monad Rnd where
     return = Rnd . return

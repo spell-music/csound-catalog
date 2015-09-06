@@ -85,12 +85,12 @@ nightChorus idlym iscale asig = 0.5 * aout
 --
 nightReverb :: Int -> D -> D -> D -> Sig -> SE (Sig, Sig)
 nightReverb n igain ipitchmod itone asig = do
-    afiltRefs   <- mapM newSERef $ replicate n 0
-    afilts1     <- mapM readSERef afiltRefs 
+    afiltRefs   <- mapM newRef $ replicate n 0
+    afilts1     <- mapM readRef afiltRefs 
     let apj     = (2 / fromIntegral n) * sum afilts1
     adels       <- sequence $ zipWith3 (del apj) idels ks afilts1
-    zipWithM_ (\ref x -> writeSERef ref $ filt x) afiltRefs adels
-    afilts2     <- mapM readSERef afiltRefs
+    zipWithM_ (\ref x -> writeRef ref $ filt x) afiltRefs adels
+    afilts2     <- mapM readRef afiltRefs
     return (mean $ odds afilts2, mean $ evens afilts2)    
     where
         idels = cycle $ fmap ( / getSampleRate) [2473, 2767, 3217, 3557, 3907, 4127, 2143, 1933]
