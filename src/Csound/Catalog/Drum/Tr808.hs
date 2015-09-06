@@ -11,9 +11,6 @@ module Csound.Catalog.Drum.Tr808(
 	lowTom', ltSpec, midTom', mtSpec, highTom', htSpec, cymbal', cymSpec, claves', clSpec, rimShot', rimSpec,
 	maraca', marSpec, highConga', hcSpec, midConga', mcSpec, lowConga', lcSpec,
 
-	-- * Metronome
-	ticks, nticks,
-
 	-- * Sampler
 	bd, sn, ohh, chh, htom, mtom, ltom, cym, cl, rim, mar, hcon, mcon, lcon,
 
@@ -253,29 +250,6 @@ claves' spec = rndAmp =<< addDur =<< asig
 		aenv = expsega	[1, dt, 0.001]
 		afmod = expsega	[3,0.00005,1]
 		asig = mul (- 0.4 * (aenv-0.001)) $ rndOsc (sig ifrq * afmod)
-
-getAccent :: Int -> [D]
-getAccent n = 1 : replicate (n - 1) 0.5
-
--- | Metronome with a chain of accents.
--- A typical 7/8 for example:
---
--- > dac $ nticks [3, 2, 2] (135 * 2)
-nticks :: [Int] -> Sig -> Sig
-nticks ns = genTicks (cycleE $ ns >>= getAccent)	
-
--- | Metronome.
---
--- > ticks n bpm
-ticks :: Int -> Sig -> Sig
-ticks n 
-	| n <= 1 	= genTicks (devt 0.5)
-	| otherwise = genTicks (cycleE $ getAccent n)
-
-genTicks :: (Tick -> Evt D) -> Sig -> Sig
-genTicks f x = mul 3 $ mlp 4000 0.1 $ 
-	sched (\amp -> mul (sig amp) $ rimShot' (TrSpec (amp + 1) 0 (1200 * (amp + 0.5)) (Just 0.05))) $ 
-	withDur 0.5 $ f $ metro (x / 60)
 
 rimSpec = cpsSpec 1700
 
