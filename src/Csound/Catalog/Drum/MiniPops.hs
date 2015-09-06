@@ -336,36 +336,109 @@ pureTamb' spec = toDrum =<< do
 
 mkSam = limSam 1
 
+-- | Bass drum
+bd :: Sam
 bd = mkSam bass
+
+-- | Snare 1
+sn1 :: Sam
 sn1 = mkSam snare1
+
+-- | Snare 2
+sn2 :: Sam
 sn2 = mkSam snare2
+
+-- | Rim shot
+rim :: Sam
 rim = mkSam rimShot
+
+-- | Cymbal 1
+cym1 :: Sam
 cym1 = mkSam cymbal1
+
+-- | Cymbal 2
+cym2 :: Sam
 cym2 = mkSam cymbal2
+
+-- | Bongo 1
+bon1 :: Sam
 bon1 = mkSam bongo1
+
+-- | Bongo 2
+bon2 :: Sam
 bon2 = mkSam bongo2
+
+-- | Bongo 3
+bon3 :: Sam
 bon3 = mkSam bongo3
+
+-- | Claves
+cl :: Sam
 cl = mkSam claves
+
+-- | Cowbell
+cow :: Sam
 cow = mkSam cowbell
+
+-- | Guiro
+gro :: Sam
 gro = mkSam guiro
+
+-- | Maracas
+mar :: Sam
 mar = mkSam maracas
+
+-- | Quijada
+qj :: Sam
 qj = mkSam quijada
+
+-- | Tambourine
+tam :: Sam
 tam = mkSam tamb
 
 mkSam' f spec = mkSam $ f spec
 
+bd' :: MpSpec -> Sam
 bd' = mkSam' bass'
+
+sn1' :: MpSpec -> Sam
 sn1' = mkSam' snare1'
+
+sn2' :: MpSpec -> Sam
 sn2' = mkSam' snare2'
+
+rim' :: MpSpec -> Sam
 rim' = mkSam' rimShot'
+
+cym1' :: MpSpec -> Sam
 cym1' = mkSam' cymbal1'
+
+cym2' :: MpSpec -> Sam
 cym2' = mkSam' cymbal2'
+
+bon1' :: MpSpec -> Sam
 bon1' = mkSam' bongo1'
+
+bon2' :: MpSpec -> Sam
 bon2' = mkSam' bongo2'
+
+bon3' :: MpSpec -> Sam
 bon3' = mkSam' bongo3'
+
+cl' :: MpSpec -> Sam
 cl' = mkSam' claves'
+
+cow' :: MpSpec -> Sam
 cow' = mkSam' cowbell'
+
+gro' :: MpSpec -> Sam
 gro' = mkSam' guiro'
+
+mar' :: MpSpec -> Sam
 mar' = mkSam' maracas'
+
+qj' :: MpSpec -> Sam
 qj' = mkSam' quijada'
+
+tam' :: MpSpec -> Sam
 tam' = mkSam' tamb'

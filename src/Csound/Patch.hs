@@ -122,7 +122,10 @@ module Csound.Patch(
     femaleA, femaleE, femaleIY, femaleO, femaleOO,
 
 	-- * Nature
-	windWall, mildWind, wind, snowCrackle
+	windWall, mildWind, wind, snowCrackle,
+
+	-- * Misc 
+	limRel, singleFx, singleFx'
 ) where
 
 import Control.Monad
@@ -144,6 +147,20 @@ fx1 dw f = [FxSpec dw (return . f)]
 
 fx1' :: Sig -> (a -> SE a) -> [FxSpec a]
 fx1' dw f = [FxSpec dw f]
+
+-- | Creates a simple FX-xhain, that contains a single pure effect.
+-- The first argument is the dry/wet-value.
+singleFx :: Sig -> (a -> a) -> [FxSpec a]
+singleFx = fx1
+
+-- | Creates a simple FX-xhain, that contains a single effect.
+-- The first argument is the dry/wet-value.
+singleFx' :: Sig -> (a -> SE a) -> [FxSpec a]
+singleFx' = fx1'
+
+-- | Limits the release section of the note.
+limRel :: SigSpace a => D -> Patch a -> Patch a
+limRel rel p = p { patchInstr = mul (fadeOut rel) . patchInstr p }
 
 ----------------------------------------------
 -- electric pianos

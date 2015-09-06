@@ -409,45 +409,59 @@ genConga dt spec = rndAmp =<< addDur =<< asig
 
 mkSam = limSam 1
 
+-- | Bass drum
 bd :: Sam
 bd = mkSam bass
 
+-- | Snare
 sn :: Sam
 sn = mkSam snare
 
+-- | Open hi-hat
 ohh :: Sam
 ohh = mkSam openHiHat
 
+-- | Closed hi-hat
 chh :: Sam
 chh = mkSam closedHiHat 
 
+-- | High tom
 htom :: Sam
 htom = mkSam highTom
 
+-- | Middle tom
 mtom :: Sam
 mtom = mkSam midTom
 
+-- | Low tom
 ltom :: Sam
 ltom = mkSam lowTom
 
+-- | Cymbal
 cym :: Sam
 cym = mkSam cymbal
 
+-- | Claves
 cl :: Sam
 cl = mkSam claves
 
+-- | Rim shot
 rim :: Sam
 rim = mkSam rimShot
 
+-- | Maracas
 mar :: Sam
 mar = mkSam maraca
 
+-- | High conga
 hcon :: Sam
 hcon = mkSam highConga
 
+-- | Middle conga
 mcon :: Sam
 mcon = mkSam midConga
 
+-- | Low conga
 lcon :: Sam
 lcon = mkSam lowConga
 
@@ -455,45 +469,59 @@ lcon = mkSam lowConga
 
 mkSam' f spec = mkSam $ f spec
 
+-- | Bass drum
 bd' :: TrSpec -> Sam
 bd' = mkSam' bass'
 
+-- | Snare
 sn' :: TrSpec -> Sam
 sn' = mkSam' snare'
 
+-- | Open hi-hat
 ohh' :: TrSpec -> Sam
 ohh' = mkSam' openHiHat'
 
+-- | Closed hi-hat
 chh' :: TrSpec -> Sam
 chh' = mkSam' closedHiHat'
 
+-- | High tom
 htom' :: TrSpec -> Sam
 htom' = mkSam' highTom'
 
+-- | Middle tom
 mtom' :: TrSpec -> Sam
 mtom' = mkSam' midTom'
 
+-- | Low tom
 ltom' :: TrSpec -> Sam
 ltom' = mkSam' lowTom'
 
+-- | Cymbal
 cym' :: TrSpec -> Sam
 cym' = mkSam' cymbal'
 
+-- | Claves
 cl' :: TrSpec -> Sam
 cl' = mkSam' claves'
 
+-- | Rim shot
 rim' :: TrSpec -> Sam
 rim' = mkSam' rimShot'
 
+-- | Maracas
 mar' :: TrSpec -> Sam
 mar' = mkSam' maraca'
 
+-- | High conga
 hcon' :: TrSpec -> Sam
 hcon' = mkSam' highConga'
 
+-- | Middle conga
 mcon' :: TrSpec -> Sam
 mcon' = mkSam' midConga'
 
+-- | Low conga
 lcon' :: TrSpec -> Sam
 lcon' = mkSam' lowConga'
 
