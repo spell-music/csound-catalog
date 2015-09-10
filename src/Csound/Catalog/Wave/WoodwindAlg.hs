@@ -4,8 +4,6 @@ module Csound.Catalog.Wave.WoodwindAlg(
     woodwind                 
 ) where
 
-import Prelude hiding ((<*))
-
 import Data.List (transpose, intersperse)
 import Control.Monad
 import Control.Monad.Trans.State
@@ -169,7 +167,7 @@ fromSpec specs durs ifreq = (hs, inorm)
         freqs = fmap rangeFreq specs
 
 byFreq :: Tuple a => D -> [(D, a)] -> a
-byFreq ifreq as = guardedTuple (fmap (\(cps, val) -> (sig ifreq <* sig cps, val)) $ init as) (snd $ last as)
+byFreq ifreq as = guardedTuple (fmap (\(cps, val) -> (sig ifreq `lessThan` sig cps, val)) $ init as) (snd $ last as)
 
 
 fromHarmSpec :: (D, D, D) -> HarmSpec -> (Sig, Tab)

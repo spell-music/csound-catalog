@@ -26,8 +26,6 @@ module Csound.Catalog.Reson(
     albertClockBellBelfastModes, woodBlockModes
 ) where
 
-import Prelude hiding ((<*))
-
 import Csound.Base
 
 -- | List of pairs of 
@@ -81,7 +79,7 @@ strike dt' = do
     onNormDur   <- noise (osciln 1 (1 / dt) decayShape 1) 0
         
     return $ guardedTuple 
-        [ (sig dt <*  0.001,    onLowDur)
+        [ (sig dt `lessThan` 0.001,    onLowDur)
         , (sig dt >=* 1,        onHighDur)
         ]                       onNormDur        
     where

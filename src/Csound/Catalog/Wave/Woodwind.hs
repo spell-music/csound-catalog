@@ -7,7 +7,7 @@ module Csound.Catalog.Wave.Woodwind
     , dizi
     ) where
 
-import Prelude hiding ((<*))
+
 import Csound.Base hiding (fromSpec)
 
 import Csound.Catalog.Wave.WoodwindAlg
@@ -624,7 +624,7 @@ shengRange (iattack, isustain, idecay) ifreq = ([(amp1, iwt1), (amp2, iwt2), (am
         inorm = byRange [ 34991, 32586, 35331, 37480 ]
 
         iwt1 = f11
-        iwt2 = ifB (ifreq <* 1025) f31 f35
+        iwt2 = ifB (ifreq `lessThan` 1025) f31 f35
         iwt3 = byRange [f32, f33, f34, f36]
            
         f11 = sine
