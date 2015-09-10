@@ -32,13 +32,14 @@ module Csound.Patch(
 	windSings, noisyChoir, longNoisyChoir, noisyChoir', longNoisyChoir', NoisyChoir(..),
 
 	-- * Pad
-	harmonPatch, deepPad,
-
 	pwPad, triPad, nightPad, overtonePad, caveOvertonePad,
 	chorusel, pwEnsemble, fmDroneSlow, fmDroneMedium, fmDroneFast, vibrophonePad,
 	RazorPad(..), razorPadSlow, razorPadFast, razorPadTremolo, razorPad, razorPad',
+	dreamPad, underwaterPad, lightIsTooBrightPad, whaleSongPad,
+	dreamPad', underwaterPad', lightIsTooBrightPad', whaleSongPad',
 
 	-- * Lead
+	polySynth, 
 	phasingLead, RazorLead(..), razorLeadSlow, razorLeadFast, razorLeadTremolo,
 	razorLead, razorLead',
 	overtoneLead,
@@ -325,15 +326,6 @@ noisyChoir' ch = (longNoisyChoir' ch) { patchFx  = fx1 0.15 largeHall2 }
 ----------------------------------------------
 -- pads
 
-
-harmonPatch :: (SigSpace a, Sigs a) => [Sig] -> [D] -> Patch a -> Patch a
-harmonPatch amps freqs p = p { 
-		patchInstr = \(amp, cps) -> fmap sum $ zipWithM (\a f -> fmap (mul a) $ patchInstr p (amp, cps * f)) amps freqs	
-	}
-
-deepPad :: (SigSpace a, Sigs a) => Patch a -> Patch a
-deepPad = harmonPatch (fmap (* 0.75) [1, 0.5]) [1, 0.5]
-
 pwPad = Patch
 	{ patchInstr = mul 0.6 . at fromMono . onCps C.pwPad
 	, patchFx    = fx1 0.25 smallHall2 }
@@ -389,8 +381,49 @@ razorPad' (RazorPad speed) = Patch
 	{ patchInstr = at fromMono . mul 0.6 . onCps (uncurry $ C.razorPad speed)
 	, patchFx    = fx1 0.35 largeHall2 }
 
+
+dreamPadFx = [FxSpec 0.35 (return . largeHall2), FxSpec 0.25 (at $ echo 0.25 0.65), FxSpec 0.25 (at $ chorus 0.07 1.25 1)]
+
+dreamPad = dreamPad' 0.35
+underwaterPad = underwaterPad' 0.35
+lightIsTooBrightPad = lightIsTooBrightPad' 0.55
+whaleSongPad = whaleSongPad' 0.35
+
+-- | The first argument is brightness (0 to 1)
+dreamPad' :: Sig -> Patch2
+dreamPad' bright = Patch 
+    { patchInstr = fmap fromMono . onCps (C.dreamPad bright)    
+    , patchFx    = dreamPadFx
+    }
+
+-- | The first argument is brightness (0 to 1)
+underwaterPad' :: Sig -> Patch2
+underwaterPad' bright = Patch 
+    { patchInstr = fmap fromMono . onCps (C.underwaterPad bright)    
+    , patchFx    = dreamPadFx
+    }
+
+-- | The first argument is brightness (0 to 1)
+lightIsTooBrightPad' :: Sig -> Patch2
+lightIsTooBrightPad' bright = Patch 
+    { patchInstr = fmap fromMono . onCps (C.lightIsTooBrightPad bright)    
+    , patchFx    = dreamPadFx
+    }
+
+-- | The first argument is brightness (0 to 1)
+whaleSongPad' :: Sig -> Patch2
+whaleSongPad' bright = Patch 
+    { patchInstr = fmap fromMono . onCps (C.whaleSongPad bright)    
+    , patchFx    = dreamPadFx
+    }
+
 ------------------------------------
 -- leads
+
+polySynth = Patch 
+	{ patchInstr = fmap fromMono . onCps C.polySynth 	
+	, patchFx    = [FxSpec 0.25 (return . largeHall2), FxSpec 0.25 (at $ echo 0.25 0.65), FxSpec 0.25 (at $ chorus 0.07 1.25 1)]
+	}
 
 phasingLead = Patch
 	{ patchInstr = at fromMono . mul (0.7 * fadeOut 0.05) . onCps (uncurry C.phasingSynth)

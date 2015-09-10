@@ -88,6 +88,10 @@ module Csound.Catalog.Wave(
     pwPad, triPad, triPadFx, 
     Accordeon(..), accordeon, accordeonFx,
 
+    -- * Pads
+    polySynthFx, polySynth,
+    dreamPad, underwaterPad, lightIsTooBrightPad, whaleSongPad,
+
     -- * Other instruments
     okComputer
 

@@ -2,22 +2,24 @@
 module Csound.Catalog.Drum.Tr808(
 	TrSpec(..),
 
-	bass, snare, openHiHat, closedHiHat, 
+	bass, bass2, snare, openHiHat, closedHiHat, 
 	lowTom, midTom, highTom, cymbal, claves, rimShot,
 	maraca, highConga, midConga, lowConga,
 
 	-- * Generic
-	bass', bdSpec, snare', snSpec, openHiHat', ohSpec, closedHiHat', chSpec,
+	bass', bass2', bdSpec, bdSpec2, snare', snSpec, openHiHat', ohSpec, closedHiHat', chSpec,
 	lowTom', ltSpec, midTom', mtSpec, highTom', htSpec, cymbal', cymSpec, claves', clSpec, rimShot', rimSpec,
 	maraca', marSpec, highConga', hcSpec, midConga', mcSpec, lowConga', lcSpec,
 
 	-- * Sampler
-	bd, sn, ohh, chh, htom, mtom, ltom, cym, cl, rim, mar, hcon, mcon, lcon,
+	bd, bd2, sn, ohh, chh, htom, mtom, ltom, cym, cl, rim, mar, hcon, mcon, lcon,
 
 	-- ** Generic
-	bd', sn', ohh', chh', htom', mtom', ltom', cym', cl', rim', mar', hcon', mcon', lcon'
+	bd', bd2', sn', ohh', chh', htom', mtom', ltom', cym', cl', rim', mar', hcon', mcon', lcon'
 
 ) where
+
+import Control.Monad
 
 import Csound.Base
 import Csound.Sam
@@ -96,6 +98,25 @@ pureBass' spec = rndAmp =<< addDur amix
 		acps  = expsega [8 * cps,0.07,0.001]
 		aimp  = oscili  aenv1 acps sine
 		amix  = asig1 * 0.7 +  aimp * 0.25
+
+bdSpec2 = TrSpec 
+	{ trDur   = 1.3
+	, trTune  = 1
+	, trCps   = 57
+	, trRnd   = Just 0.05 }
+
+bass2 = bass2' bdSpec2
+
+bass2' spec = pureBass2' =<< rndSpec spec
+
+pureBass2' :: TrSpec -> SE Sig
+pureBass2' spec = (rndAmp <=< addDur) $ compr $ mul (expsegr [1, 0.6 * dur, 0.1, 0.4 * dur, 0.001] (0.4 * dur) 0.001) $ 
+    fosc 1 2 (0.5 * xeg 0.01 0.1 0.2 0.5) (cps * semitone (expseg [12, 0.01, 27, 0.3, 0.001]))
+    where 
+    	compr x = dam x 0.65 2.4 2.3 0.05 0.1
+    	dur = trDur spec
+    	cps = sig $ trCps spec 
+
 
 snSpec = cpsSpec 342
 	
@@ -413,6 +434,9 @@ mkSam = limSam 1
 bd :: Sam
 bd = mkSam bass
 
+bd2 :: Sam
+bd2 = mkSam bass2
+
 -- | Snare
 sn :: Sam
 sn = mkSam snare
@@ -472,6 +496,9 @@ mkSam' f spec = mkSam $ f spec
 -- | Bass drum
 bd' :: TrSpec -> Sam
 bd' = mkSam' bass'
+
+bd2' :: TrSpec -> Sam
+bd2' = mkSam' bass2'
 
 -- | Snare
 sn' :: TrSpec -> Sam
