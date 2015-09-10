@@ -45,7 +45,7 @@ module Csound.Patch(
 	overtoneLead,
 
 	-- * Bass
-	simpleBass, pwBass,
+	simpleBass, pwBass, deepBass, withDeepBass,
 
 	-- * Plucked
 	guitar, harpsichord,
@@ -464,6 +464,14 @@ simpleBass = Patch
 pwBass = Patch 
 	{ patchInstr = at fromMono . mul 0.4 . onCps C.pwBass
 	, patchFx    = fx1 0.25 smallHall2 }
+
+deepBass = Patch
+	{ patchInstr = at fromMono . mul 0.4 . onCps C.deepBass
+	, patchFx    = fx1 0.25 smallHall2 }
+
+-- | The first argument is the amount of deepBass to mix into the original patch.
+withDeepBass :: Sig -> Patch2 -> Patch2
+withDeepBass k = mixInstr k deepBass
 
 ------------------------------------
 -- plucked

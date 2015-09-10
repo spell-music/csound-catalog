@@ -93,7 +93,7 @@ module Csound.Catalog.Wave(
     dreamPad, underwaterPad, lightIsTooBrightPad, whaleSongPad,
 
     -- * Other instruments
-    okComputer
+    okComputer, deepBass
 
 ) where
 

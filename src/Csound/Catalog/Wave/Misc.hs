@@ -1,6 +1,7 @@
 module Csound.Catalog.Wave.Misc (
     okComputer, polySynthFx, polySynth,
-    dreamPad, underwaterPad, lightIsTooBrightPad, whaleSongPad
+    dreamPad, underwaterPad, lightIsTooBrightPad, whaleSongPad,
+    deepBass
 ) where
 
 import Csound.Base 
@@ -64,3 +65,5 @@ genDreamPadInstr mkOsc brightness x = do
 
         vibLfo1 = lfo1 0.005
         vibLfo2 = lfo2 0.007
+
+deepBass x = mul 0.5 $ at (hp1 45) $ at (\x -> dam x 0.45 2 2 0.01 0.01) $  mul (xeg 0.005 0.6 1 0.05) $ sum [(filt 2 lp 275 0.25) (saw $ x * 0.5), osc (x * 0.5)]
