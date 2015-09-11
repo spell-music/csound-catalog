@@ -16,7 +16,7 @@ triPad x = mul (1.5 * fades 0.3 0.5) $ at (mlp (x * 5) 0.15) $ do
 	mul 0.5 $ rndTri (x + 1.5 * lfo) + rndTri (x * cent 8)
 
 pwPad :: Sig -> SE Sig
-pwPad x = mul (fades 0.3 0.5) $ at (mlp (x * 5) 0.15) $ do
+pwPad x = mul (fades 0.3 0.95) $ at (mlp (x * 5) 0.15) $ do
 	let lfo = uosc 4
 	return $ mul 0.5 $ pw (0.2 + 0.4 * lfo) x + tri (x * cent 8)
 
