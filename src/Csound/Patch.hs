@@ -21,6 +21,8 @@ module Csound.Patch(
 	HammondOrgan(..), hammondOrgan, hammondOrgan',
 	sawOrgan, triOrgan, sqrOrgan, pwOrgan, waveOrgan,
 
+	hammondOrganm, hammondOrganm', sawOrganm, triOrganm, sqrOrganm, pwOrganm, waveOrganm,
+
 	-- * Accordeon
 	accordeon, accordeonBright1, accordeonBright2, brokenAccordeon,
 	accordeon', Accordeon(..),
@@ -38,6 +40,13 @@ module Csound.Patch(
 	dreamPad, underwaterPad, lightIsTooBrightPad, whaleSongPad,
 	dreamPad', underwaterPad', lightIsTooBrightPad', whaleSongPad',
 
+	-- ** Pad Monosynth
+	pwPadm, triPadm, nightPadm, overtonePadm, caveOvertonePadm, choruselm,
+	pwEnsemblem, fmDroneSlowm, fmDroneMediumm, fmDroneFastm, 
+	razorPadSlowm, razorPadFastm, razorPadTremolom, razorPadm, razorPadm',
+	dreamPadm, underwaterPadm, lightIsTooBrightPadm, whaleSongPadm, dreamPadm', underwaterPadm', 
+	lightIsTooBrightPadm', whaleSongPadm',
+
 	-- * Lead
 	polySynth, 
 	phasingLead, RazorLead(..), razorLeadSlow, razorLeadFast, razorLeadTremolo,
@@ -48,7 +57,7 @@ module Csound.Patch(
 	simpleBass, pwBass, deepBass, withDeepBass,
 
 	-- * Plucked
-	guitar, harpsichord,
+	guitar, harpsichord,	
 
 	-- * Strike
 
@@ -89,6 +98,19 @@ module Csound.Patch(
 	scrapePadRedCedarWoodPlate, scrapePadTubularBell, scrapePadRedwoodPlate, scrapePadDouglasFirWoodPlate, scrapePadUniformWoodenBar,
 	scrapePadUniformAluminumBar, scrapePadVibraphone1, scrapePadVibraphone2, scrapePadChalandiPlates, scrapePadTibetanBowl152,
 	scrapePadTibetanBowl140, scrapePadWineGlass, scrapePadSmallHandbell, scrapePadAlbertClockBellBelfast, scrapePadWoodBlock,
+
+
+	-- ** Scrape monosynth
+	-- | Unfortunately they don't work with @atMonoMidi@. Though @atNote@ works fine. 
+	scrapeDahinam, scrapeBanyanm, scrapeXylophonem, scrapeTibetanBowl180m, scrapeSpinelSpherem, scrapePotLidm, scrapeRedCedarWoodPlatem,
+	scrapeTubularBellm, scrapeRedwoodPlatem, scrapeDouglasFirWoodPlatem, scrapeUniformWoodenBarm, scrapeUniformAluminumBarm,
+	scrapeVibraphone1m, scrapeVibraphone2m, scrapeChalandiPlatesm, scrapeTibetanBowl152m, scrapeTibetanBowl140m, scrapeWineGlassm,
+	scrapeSmallHandbellm, scrapeAlbertClockBellBelfastm, scrapeWoodBlockm, 
+
+	scrapePadDahinam, scrapePadBanyanm, scrapePadXylophonem, scrapePadTibetanBowl180m, scrapePadSpinelSpherem, scrapePadPotLidm,
+	scrapePadRedCedarWoodPlatem, scrapePadTubularBellm, scrapePadRedwoodPlatem, scrapePadDouglasFirWoodPlatem, scrapePadUniformWoodenBarm,
+	scrapePadUniformAluminumBarm, scrapePadVibraphone1m, scrapePadVibraphone2m, scrapePadChalandiPlatesm, scrapePadTibetanBowl152m,
+	scrapePadTibetanBowl140m, scrapePadWineGlassm, scrapePadSmallHandbellm, scrapePadAlbertClockBellBelfastm, scrapePadWoodBlockm,
 
 	-- * Woodwind
 
@@ -143,6 +165,9 @@ import Csound.Catalog.Wave(Accordeon(..))
 
 import Data.Char
 
+onSig1 :: SigSpace a => (Sig -> a) -> Sig2 -> a
+onSig1 f (amp, cps) = mul amp $ f cps
+
 fx1 :: Sig -> (a -> a) -> [FxSpec a]
 fx1 dw f = [FxSpec dw (return . f)]
 
@@ -160,7 +185,7 @@ singleFx' :: Sig -> (a -> SE a) -> [FxSpec a]
 singleFx' = fx1'
 
 -- | Limits the release section of the note.
-limRel :: SigSpace a => D -> Patch a -> Patch a
+limRel :: SigSpace b => D -> Patch a b -> Patch a b
 limRel rel p = p { patchInstr = fmap (mul (fadeOut rel)) . patchInstr p }
 
 ----------------------------------------------
@@ -230,8 +255,14 @@ instance Default HammondOrgan where
 
 hammondOrgan = hammondOrgan' def
 
+hammondOrganm = hammondOrganm' def
+
 hammondOrgan' (HammondOrgan detune) = Patch
 	{ patchInstr = mul 0.4 . at fromMono . onCps (C.hammondOrgan detune)
+	, patchFx    = fx1 0.15 smallRoom2 }
+
+hammondOrganm' (HammondOrgan detune) = Patch
+	{ patchInstr = mul 0.4 . at fromMono . onSig1 (C.hammondOrgan detune)
 	, patchFx    = fx1 0.15 smallRoom2 }
 
 toneWheelOrgan = Patch
@@ -243,9 +274,20 @@ triOrgan  = mul 0.5  $ waveOrgan rndTri
 sqrOrgan  = mul 0.45 $ waveOrgan rndSqr
 pwOrgan k = mul 0.45 $ waveOrgan (rndPw k)
 
+sawOrganm  = mul 0.45 $ waveOrganm rndSaw
+triOrganm  = mul 0.5  $ waveOrganm rndTri
+sqrOrganm  = mul 0.45 $ waveOrganm rndSqr
+pwOrganm k = mul 0.45 $ waveOrganm (rndPw k)
+
 waveOrgan :: (Sig -> SE Sig) -> Patch2 
 waveOrgan wave = Patch 
 	{ patchInstr = onCps $ at fromMono . mul (fades 0.01 0.01) . at (mlp 3500 0.1) . wave
+	, patchFx    = fx1 0.25 smallHall2	
+	}
+
+waveOrganm :: (Sig -> SE Sig) -> PatchSig2 
+waveOrganm wave = Patch 
+	{ patchInstr = onSig1 $ at fromMono . mul (fades 0.01 0.01) . at (mlp 3500 0.1) . wave
 	, patchFx    = fx1 0.25 smallHall2	
 	}
 
@@ -330,38 +372,76 @@ pwPad = Patch
 	{ patchInstr = mul 0.6 . at fromMono . onCps C.pwPad
 	, patchFx    = fx1 0.25 smallHall2 }
 
+pwPadm = Patch
+	{ patchInstr = mul 0.6 . at fromMono . onSig1 C.pwPad
+	, patchFx    = fx1 0.25 smallHall2 }
+
 triPad = Patch 
 	{ patchInstr = fmap fromMono . mul 0.7 . onCps C.triPad
+	, patchFx  = fx1' 0.25 C.triPadFx }
+
+triPadm = Patch 
+	{ patchInstr = fmap fromMono . mul 0.7 . onSig1 C.triPad
 	, patchFx  = fx1' 0.25 C.triPadFx }
 
 nightPad = Patch
 	{ patchInstr = mul 0.48 . at fromMono . onCps (mul (fadeOut 1) . C.nightPad 0.5)
 	, patchFx    = fx1 0.25 largeHall2 }
 
+nightPadm = Patch
+	{ patchInstr = mul 0.48 . return . fromMono . onSig1 ((fadeOut 1 * ) . C.nightPad 0.5)
+	, patchFx    = fx1 0.25 largeHall2 }
+
 overtonePad = Patch
 	{ patchInstr = mul 0.65 . at fromMono . mixAt 0.25 (mlp 1500 0.1) . onCps (\cps -> mul (fades 0.25 1.2) (C.tibetan 11 0.012 cps) + mul (fades 0.25 1) (C.tibetan 13 0.015 (cps * 0.5)))
 	, patchFx    = fx1 0.35 smallHall2 }
 
+overtonePadm = Patch
+	{ patchInstr = mul 0.65 . return . fromMono . mixAt 0.25 (mlp 1500 0.1) . onSig1 (\cps -> mul (fades 0.25 1.2) (C.tibetan 11 0.012 cps) + mul (fades 0.25 1) (C.tibetan 13 0.015 (cps * 0.5)))
+	, patchFx    = fx1 0.35 smallHall2 }
+
 caveOvertonePad = overtonePad { patchFx = fx1 0.2 (magicCave2 . mul 0.8) }
+
+caveOvertonePadm = overtonePadm { patchFx = fx1 0.2 (magicCave2 . mul 0.8) }
 
 chorusel = Patch
 	{ patchInstr = mul 0.9 . at (mlp (3500 + 2000 * uosc 0.1) 0.1) . onCps (mul (fades 0.65 1) . C.chorusel 13 0.5 10)
+	, patchFx    = fx1 0.35 smallHall2 }
+
+choruselm = Patch
+	{ patchInstr = mul 0.9 . return . at (mlp (3500 + 2000 * uosc 0.1) 0.1) . onSig1 (mul (fades 0.65 1) . C.chorusel 13 0.5 10)
 	, patchFx    = fx1 0.35 smallHall2 }
 
 pwEnsemble = Patch
 	{ patchInstr = at fromMono . mul 0.55 . onCps C.pwEnsemble
 	, patchFx    = fx1 0.25 smallHall2 }
 
+pwEnsemblem = Patch
+	{ patchInstr = at fromMono . mul 0.55 . onSig1 C.pwEnsemble
+	, patchFx    = fx1 0.25 smallHall2 }
+
 fmDroneSlow = Patch
 	{ patchInstr = at fromMono . mul 0.5 . onCps (C.fmDrone 3 (10, 5))
+	, patchFx    = fx1 0.35 largeHall2 }
+
+fmDroneSlowm = Patch
+	{ patchInstr = return . at fromMono . mul 0.5 . onSig1 (C.fmDrone 3 (10, 5))
 	, patchFx    = fx1 0.35 largeHall2 }
 
 fmDroneMedium = Patch
 	{ patchInstr = at fromMono . mul 0.5 . onCps (C.fmDrone 3 (5, 3))
 	, patchFx    = fx1 0.25 smallHall2 }
 
+fmDroneMediumm = Patch
+	{ patchInstr = return . at fromMono . mul 0.5 . onSig1 (C.fmDrone 3 (5, 3))
+	, patchFx    = fx1 0.25 smallHall2 }
+
 fmDroneFast = Patch
 	{ patchInstr = at fromMono . mul 0.5 . onCps (C.fmDrone 3 (0.5, 1))
+	, patchFx    = fx1 0.25 smallHall2 } 
+
+fmDroneFastm = Patch
+	{ patchInstr = return . at fromMono . mul 0.5 . onSig1 (C.fmDrone 3 (0.5, 1))
 	, patchFx    = fx1 0.25 smallHall2 } 
 
 vibrophonePad = largeVibraphone1 { patchInstr = mul (1.5 * fades 0.5 0.25) . at (mlp 2500 0.1). patchInstr largeVibraphone1 }
@@ -375,12 +455,22 @@ razorPadSlow = razorPad' (def { razorPadSpeed = 0.1 })
 razorPadFast = razorPad' (def { razorPadSpeed = 1.7 })
 razorPadTremolo = razorPad' (def { razorPadSpeed = 6.7 })
 
+razorPadSlowm = razorPadm' (def { razorPadSpeed = 0.1 })
+razorPadFastm = razorPadm' (def { razorPadSpeed = 1.7 })
+razorPadTremolom = razorPadm' (def { razorPadSpeed = 6.7 })
+
 razorPad = razorPad' def
+
+razorPadm = razorPadm' def
 
 razorPad' (RazorPad speed) = Patch
 	{ patchInstr = at fromMono . mul 0.6 . onCps (uncurry $ C.razorPad speed)
 	, patchFx    = fx1 0.35 largeHall2 }
 
+
+razorPadm' (RazorPad speed) = Patch
+	{ patchInstr = at fromMono . mul 0.6 . (uncurry $ C.razorPad speed)
+	, patchFx    = fx1 0.35 largeHall2 }
 
 dreamPadFx = [FxSpec 0.35 (return . largeHall2), FxSpec 0.25 (at $ echo 0.25 0.65), FxSpec 0.25 (at $ chorus 0.07 1.25 1)]
 
@@ -389,10 +479,22 @@ underwaterPad = underwaterPad' 0.35
 lightIsTooBrightPad = lightIsTooBrightPad' 0.55
 whaleSongPad = whaleSongPad' 0.35
 
+dreamPadm = dreamPadm' 0.35
+underwaterPadm = underwaterPadm' 0.35
+lightIsTooBrightPadm = lightIsTooBrightPadm' 0.55
+whaleSongPadm = whaleSongPadm' 0.35
+
 -- | The first argument is brightness (0 to 1)
 dreamPad' :: Sig -> Patch2
 dreamPad' bright = Patch 
     { patchInstr = fmap fromMono . onCps (C.dreamPad bright)    
+    , patchFx    = dreamPadFx
+    }
+
+-- | The first argument is brightness (0 to 1)
+dreamPadm' :: Sig -> PatchSig2
+dreamPadm' bright = Patch 
+    { patchInstr = fmap fromMono . onSig1 (C.dreamPad bright)    
     , patchFx    = dreamPadFx
     }
 
@@ -404,9 +506,22 @@ underwaterPad' bright = Patch
     }
 
 -- | The first argument is brightness (0 to 1)
+underwaterPadm' :: Sig -> PatchSig2
+underwaterPadm' bright = Patch 
+    { patchInstr = fmap fromMono . onSig1 (C.underwaterPad bright)    
+    , patchFx    = dreamPadFx
+    }
+
+-- | The first argument is brightness (0 to 1)
 lightIsTooBrightPad' :: Sig -> Patch2
 lightIsTooBrightPad' bright = Patch 
     { patchInstr = fmap fromMono . onCps (C.lightIsTooBrightPad bright)    
+    , patchFx    = dreamPadFx
+    }
+
+lightIsTooBrightPadm' :: Sig -> PatchSig2
+lightIsTooBrightPadm' bright = Patch 
+    { patchInstr = fmap fromMono . onSig1 (C.lightIsTooBrightPad bright)    
     , patchFx    = dreamPadFx
     }
 
@@ -414,6 +529,12 @@ lightIsTooBrightPad' bright = Patch
 whaleSongPad' :: Sig -> Patch2
 whaleSongPad' bright = Patch 
     { patchInstr = fmap fromMono . onCps (C.whaleSongPad bright)    
+    , patchFx    = dreamPadFx
+    }
+
+whaleSongPadm' :: Sig -> PatchSig2
+whaleSongPadm' bright = Patch 
+    { patchInstr = fmap fromMono . onSig1 (C.whaleSongPad bright)    
     , patchFx    = dreamPadFx
     }
 
@@ -505,7 +626,7 @@ data Strike = Strike
 instance Default Strike where
 	def = Strike 1.5 True smallHall2
 
-strike' :: Strike -> (Sig -> Sig) -> Patch Sig2
+strike' :: Strike -> (Sig -> Sig) -> Patch2
 strike' spec instr = Patch 
 	{ patchInstr =  \x@(amp, cps) -> return $ fromMono $ mul (0.75 * sig amp * fadeOut (rel x)) $ instr (sig cps)
 	, patchFx    = fx1' 0.25 (strikeFx spec) }
@@ -723,8 +844,16 @@ scrape k m = Patch
 	{ patchInstr = \x@(amp, cps) -> (mul (0.75 * sig amp * k * fades 0.5 (scrapeRelease x 0.97)) . at fromMono . C.scrapeModes m) (sig cps)
 	, patchFx    = fx1 0.15 largeHall2 }
 
+scrapem k m = Patch 
+	{ patchInstr = \(amp, cps) -> (mul (0.75 * amp * k * fades 0.5 1.97) . at fromMono . C.scrapeModes m) cps
+	, patchFx    = fx1 0.15 largeHall2 }
+
 scrapePad k m = Patch 
 	{ patchInstr = \x@(amp, cps) -> (mul (0.75 * sig amp * k * fades 0.5 (scrapeRelease x 2.27	)) . at fromMono . C.scrapeModes m) (sig cps)
+	, patchFx    = fx1 0.15 largeHall2 }
+
+scrapePadm k m = Patch 
+	{ patchInstr = \(amp, cps) -> (mul (0.75 * amp * k * fades 0.5 2.27) . at fromMono . C.scrapeModes m) cps
 	, patchFx    = fx1 0.15 largeHall2 }	
 
 scaleScrapeDahina = 1.32
@@ -771,6 +900,28 @@ scrapeSmallHandbell = scrape scaleScrapeSmallHandbell C.smallHandbellModes
 scrapeAlbertClockBellBelfast = scrape scaleScrapeAlbertClockBellBelfast C.albertClockBellBelfastModes
 scrapeWoodBlock = scrape scaleScrapeWoodBlock C.woodBlockModes
 
+scrapeDahinam = scrapem scaleScrapeDahina C.dahinaModes
+scrapeBanyanm = scrapem scaleScrapeBanyan C.banyanModes
+scrapeXylophonem = scrapem scaleScrapeXylophone C.xylophoneModes
+scrapeTibetanBowl180m = scrapem scaleScrapeTibetanBowl180 C.tibetanBowlModes180
+scrapeSpinelSpherem = scrapem scaleScrapeSpinelSphere C.spinelSphereModes
+scrapePotLidm = scrape scaleScrapePotLid C.potLidModes
+scrapeRedCedarWoodPlatem = scrapem scaleScrapeRedCedarWoodPlate C.redCedarWoodPlateModes
+scrapeTubularBellm = scrapem scaleScrapeTubularBell C.tubularBellModes
+scrapeRedwoodPlatem = scrapem scaleScrapeRedwoodPlate C.redwoodPlateModes
+scrapeDouglasFirWoodPlatem = scrapem scaleScrapeDouglasFirWoodPlate C.douglasFirWoodPlateModes
+scrapeUniformWoodenBarm = scrapem scaleScrapeUniformWoodenBar C.uniformWoodenBarModes
+scrapeUniformAluminumBarm = scrapem scaleScrapeUniformAluminumBar C.uniformAluminumBarModes
+scrapeVibraphone1m = scrapem scaleScrapeVibraphone1 C.vibraphoneModes1
+scrapeVibraphone2m = scrapem scaleScrapeVibraphone2 C.vibraphoneModes2
+scrapeChalandiPlatesm = scrapem scaleScrapeChalandiPlates C.chalandiPlatesModes
+scrapeTibetanBowl152m = scrapem scaleScrapeTibetanBowl152 C.tibetanBowlModes152
+scrapeTibetanBowl140m = scrapem scaleScrapeTibetanBowl140 C.tibetanBowlModes140
+scrapeWineGlassm = scrapem scaleScrapeWineGlass C.wineGlassModes
+scrapeSmallHandbellm = scrapem scaleScrapeSmallHandbell C.smallHandbellModes
+scrapeAlbertClockBellBelfastm = scrapem scaleScrapeAlbertClockBellBelfast C.albertClockBellBelfastModes
+scrapeWoodBlockm = scrapem scaleScrapeWoodBlock C.woodBlockModes
+
 scrapeFastDahina = scrapeFast scaleScrapeDahina C.dahinaModes
 scrapeFastBanyan = scrapeFast scaleScrapeBanyan C.banyanModes
 scrapeFastXylophone = scrapeFast scaleScrapeXylophone C.xylophoneModes
@@ -814,6 +965,29 @@ scrapePadWineGlass = scrapePad scaleScrapeWineGlass C.wineGlassModes
 scrapePadSmallHandbell = scrapePad scaleScrapeSmallHandbell C.smallHandbellModes
 scrapePadAlbertClockBellBelfast = scrapePad scaleScrapeAlbertClockBellBelfast C.albertClockBellBelfastModes
 scrapePadWoodBlock = scrapePad scaleScrapeWoodBlock C.woodBlockModes
+
+scrapePadDahinam = scrapePadm scaleScrapeDahina C.dahinaModes
+scrapePadBanyanm = scrapePadm scaleScrapeBanyan C.banyanModes
+scrapePadXylophonem = scrapePadm scaleScrapeXylophone C.xylophoneModes
+scrapePadTibetanBowl180m = scrapePadm scaleScrapeTibetanBowl180 C.tibetanBowlModes180
+scrapePadSpinelSpherem = scrapePadm scaleScrapeSpinelSphere C.spinelSphereModes
+scrapePadPotLidm = scrapePadm scaleScrapePotLid C.potLidModes
+scrapePadRedCedarWoodPlatem = scrapePadm scaleScrapeRedCedarWoodPlate C.redCedarWoodPlateModes
+scrapePadTubularBellm = scrapePadm scaleScrapeTubularBell C.tubularBellModes
+scrapePadRedwoodPlatem = scrapePadm scaleScrapeRedwoodPlate C.redwoodPlateModes
+scrapePadDouglasFirWoodPlatem = scrapePadm scaleScrapeDouglasFirWoodPlate C.douglasFirWoodPlateModes
+scrapePadUniformWoodenBarm = scrapePadm scaleScrapeUniformWoodenBar C.uniformWoodenBarModes
+scrapePadUniformAluminumBarm = scrapePadm scaleScrapeUniformAluminumBar C.uniformAluminumBarModes
+scrapePadVibraphone1m = scrapePadm scaleScrapeVibraphone1 C.vibraphoneModes1
+scrapePadVibraphone2m = scrapePadm scaleScrapeVibraphone2 C.vibraphoneModes2
+scrapePadChalandiPlatesm = scrapePadm scaleScrapeChalandiPlates C.chalandiPlatesModes
+scrapePadTibetanBowl152m = scrapePadm scaleScrapeTibetanBowl152 C.tibetanBowlModes152
+scrapePadTibetanBowl140m = scrapePadm scaleScrapeTibetanBowl140 C.tibetanBowlModes140
+scrapePadWineGlassm = scrapePadm scaleScrapeWineGlass C.wineGlassModes
+scrapePadSmallHandbellm = scrapePadm scaleScrapeSmallHandbell C.smallHandbellModes
+scrapePadAlbertClockBellBelfastm = scrapePadm scaleScrapeAlbertClockBellBelfast C.albertClockBellBelfastModes
+scrapePadWoodBlockm = scrapePadm scaleScrapeWoodBlock C.woodBlockModes
+
 
 ------------------------------------
 -- woodwind
