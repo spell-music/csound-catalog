@@ -37,14 +37,14 @@ module Csound.Patch(
 	pwPad, triPad, nightPad, overtonePad, caveOvertonePad,
 	chorusel, pwEnsemble, fmDroneSlow, fmDroneMedium, fmDroneFast, vibrophonePad,
 	RazorPad(..), razorPadSlow, razorPadFast, razorPadTremolo, razorPad, razorPad',
-	dreamPad, underwaterPad, lightIsTooBrightPad, whaleSongPad,
-	dreamPad', underwaterPad', lightIsTooBrightPad', whaleSongPad',
+	dreamPad, underwaterPad, lightIsTooBrightPad, whaleSongPad, dreamPadBy,
+	dreamPad', underwaterPad', lightIsTooBrightPad', whaleSongPad', dreamPad', dreamPadBy',
 
 	-- ** Pad Monosynth
 	pwPadm, triPadm, nightPadm, overtonePadm, caveOvertonePadm, choruselm,
 	pwEnsemblem, fmDroneSlowm, fmDroneMediumm, fmDroneFastm, 
 	razorPadSlowm, razorPadFastm, razorPadTremolom, razorPadm, razorPadm',
-	dreamPadm, underwaterPadm, lightIsTooBrightPadm, whaleSongPadm, dreamPadm', underwaterPadm', 
+	dreamPadm, dreamPadBym, underwaterPadm, lightIsTooBrightPadm, whaleSongPadm, dreamPadm', underwaterPadm', dreamPadBym',
 	lightIsTooBrightPadm', whaleSongPadm',
 
 	-- * Lead
@@ -52,6 +52,9 @@ module Csound.Patch(
 	phasingLead, RazorLead(..), razorLeadSlow, razorLeadFast, razorLeadTremolo,
 	razorLead, razorLead',
 	overtoneLead,
+
+	-- ** Lead Monosynth
+	polySynthm,
 
 	-- * Bass
 	simpleBass, pwBass, deepBass, withDeepBass,
@@ -266,7 +269,7 @@ hammondOrganm' (HammondOrgan detune) = Patch
 	, patchFx    = fx1 0.15 smallRoom2 }
 
 toneWheelOrgan = Patch
-	{ patchInstr = at fromMono  . mul 0.6 . onCps C.toneWheel
+	{ patchInstr = at fromMono  . mul (0.6 * fadeOut 0.05) . onCps C.toneWheel
 	, patchFx    = fx1 0.3 smallHall2 }
 
 sawOrgan  = mul 0.45 $ waveOrgan rndSaw
@@ -479,10 +482,14 @@ underwaterPad = underwaterPad' 0.35
 lightIsTooBrightPad = lightIsTooBrightPad' 0.55
 whaleSongPad = whaleSongPad' 0.35
 
+dreamPadBy = dreamPadBy' 0.35
+
 dreamPadm = dreamPadm' 0.35
 underwaterPadm = underwaterPadm' 0.35
 lightIsTooBrightPadm = lightIsTooBrightPadm' 0.55
 whaleSongPadm = whaleSongPadm' 0.35
+
+dreamPadBym = dreamPadBym' 0.35
 
 -- | The first argument is brightness (0 to 1)
 dreamPad' :: Sig -> Patch2
@@ -491,10 +498,24 @@ dreamPad' bright = Patch
     , patchFx    = dreamPadFx
     }
 
+-- | The first argument is brightness. The second argument is a wave shape function.
+dreamPadBy' :: Sig -> (Sig -> SE Sig) -> Patch2
+dreamPadBy' bright wave = Patch 
+    { patchInstr = fmap fromMono . onCps (C.dreamPadBy wave bright)    
+    , patchFx    = dreamPadFx
+    }
+
 -- | The first argument is brightness (0 to 1)
 dreamPadm' :: Sig -> PatchSig2
 dreamPadm' bright = Patch 
     { patchInstr = fmap fromMono . onSig1 (C.dreamPad bright)    
+    , patchFx    = dreamPadFx
+    }
+
+-- | The first argument is brightness (0 to 1). The second argument is a wave function.
+dreamPadBym' :: Sig -> (Sig -> SE Sig) -> PatchSig2
+dreamPadBym' bright wave = Patch 
+    { patchInstr = fmap fromMono . onSig1 (C.dreamPadBy wave bright)
     , patchFx    = dreamPadFx
     }
 
@@ -543,6 +564,11 @@ whaleSongPadm' bright = Patch
 
 polySynth = Patch 
 	{ patchInstr = fmap fromMono . onCps C.polySynth 	
+	, patchFx    = [FxSpec 0.25 (return . largeHall2), FxSpec 0.25 (at $ echo 0.25 0.65), FxSpec 0.25 (at $ chorus 0.07 1.25 1)]
+	}
+
+polySynthm = Patch 
+	{ patchInstr = fmap fromMono . onSig1 C.polySynth 	
 	, patchFx    = [FxSpec 0.25 (return . largeHall2), FxSpec 0.25 (at $ echo 0.25 0.65), FxSpec 0.25 (at $ chorus 0.07 1.25 1)]
 	}
 

@@ -1,6 +1,7 @@
 module Csound.Catalog.Wave.Misc (
     okComputer, polySynthFx, polySynth,
     dreamPad, underwaterPad, lightIsTooBrightPad, whaleSongPad,
+    dreamPadBy,
     deepBass
 ) where
 
@@ -26,17 +27,18 @@ polySynthFx = mixAt 0.25 largeHall2 . mixAt 0.25 (echo 0.25 0.65) . at (chorus 0
 
 uni = multiHz 2 (cent 50)
 
-dreamPad = genDreamPadInstr mkOsc 
-    where mkOsc vibLfo1 vibLfo2 x = uni rndSaw (vibLfo1 x) + uni rndSaw (vibLfo2 $ x * cent 14) 
-
-underwaterPad = genDreamPadInstr mkOsc 
-    where mkOsc vibLfo1 vibLfo2 x = uni rndTri (vibLfo1 x) + uni rndTri (vibLfo2 $ x * cent 14) 
+dreamPad = dreamPadBy rndSaw
+underwaterPad = dreamPadBy rndTri
 
 lightIsTooBrightPad = genDreamPadInstr mkOsc 
     where mkOsc vibLfo1 vibLfo2 x = uni rndSaw (vibLfo1 x) + uni rndSaw (vibLfo2 $ x * cent 14) + mul 0.3 (mul (uosc 0.25) (rndTri (vibLfo2 $ x * 7 * cent 4)) + mul (isawSeq [1, 0.5, 0.25] 6 * uosc 0.17) (rndTri (vibLfo2 $ x * 13)) + mul (sqrSeq [1, 0.5, 0.25, 0.1] 8 * uosc 0.28) (rndOsc (vibLfo2 $ x * 9 * cent 3)))
 
 whaleSongPad = genDreamPadInstr mkOsc 
     where mkOsc vibLfo1 vibLfo2 x = uni rndTri (vibLfo1 x) + uni rndTri (vibLfo2 $ x * cent 14) + uni rndTri (vibLfo2 $ 3 * x * cent 14) + mul 0.15 (uni rndTri (vibLfo2 $ 7 * x * cent 14)) + mul 0.15 (uni rndTri ((vibLfo2 $ 11 * x * cent 14) + 400 * uosc 0.2))
+
+dreamPadBy :: (Sig -> SE Sig) -> Sig -> Sig -> SE Sig
+dreamPadBy wave = genDreamPadInstr mkOsc
+    where mkOsc vibLfo1 vibLfo2 x = uni wave (vibLfo1 x) + uni wave (vibLfo2 $ x * cent 14) 
 
 genDreamPadInstr mkOsc brightness x = do
     a1 <- oscs

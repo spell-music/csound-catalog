@@ -91,6 +91,7 @@ module Csound.Catalog.Wave(
     -- * Pads
     polySynthFx, polySynth,
     dreamPad, underwaterPad, lightIsTooBrightPad, whaleSongPad,
+    dreamPadBy,
 
     -- * Other instruments
     okComputer, deepBass
