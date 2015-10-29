@@ -27,7 +27,7 @@ Source-repository head
 Library
   Ghc-Options:    -Wall
   Build-Depends:
-        base >= 4, base < 5, transformers >= 0.3, csound-expression >= 4.8.3, csound-sampler >=0.0.6.3
+        base >= 4, base < 5, transformers >= 0.3, csound-expression >= 4.8.3, csound-sampler >=0.0.6.3, sharc-timbre
   Hs-Source-Dirs:      src/
   Exposed-Modules:
         Csound.Catalog
@@ -55,4 +55,5 @@ Library
         Csound.Catalog.Wave.Flavio
         Csound.Catalog.Wave.Thor
         Csound.Catalog.Wave.Bitwig
+        Csound.Catalog.Wave.Sharc
       

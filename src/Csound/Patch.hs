@@ -137,6 +137,17 @@ module Csound.Patch(
 	diziSpec, shortDiziSpec, 
 	dizi, shortDizi, diziVibrato, mutedDizi, brightDizi,
 
+	-- * SHARC instruments
+	SharcInstr,
+	soloSharc, orcSharc, padSharc, purePadSharc, dreamSharc, dreamSharc',
+
+	-- ** concrete instruments
+	shViolin, shViolinPizzicato, shViolinMuted, shViolinMarteleBowing, shViolinsEnsemble, shViola, shViolaPizzicato, shViolaMuted,
+    shViolaMarteleBowing, shTuba, shTromboneMuted, shTrombone, shPiccolo, shOboe, shFrenchHornMuted, shFrenchHorn, shFlute,
+    shEnglishHorn, shClarinetEflat, shTrumpetMutedC, shTrumpetC, shContrabassClarinet, shContrabassoon, shCello, shCelloPizzicato,
+    shCelloMuted, shCelloMarteleBowing, shContrabassPizzicato, shContrabassMuted, shContrabassMarteleBowing, shContrabass,
+    shClarinet, shBassTrombone, shBassClarinet, shBassoon, shBassFlute, shTrumpetBach, shAltoTrombone, shAltoFlute,
+
 	-- * X-rays
 	pulseWidth, xanadu, alienIsAngry, noiz, blue, black, simpleMarimba, okComputer, noiseBell,
 
@@ -164,7 +175,13 @@ import qualified Csound.Catalog.Reson as C
 import Csound.Catalog.Wave(maleA, maleE, maleIY, maleO, maleOO, maleU, maleER, maleUH,
     femaleA, femaleE, femaleIY, femaleO, femaleOO)
 
-import Csound.Catalog.Wave(Accordeon(..))
+import Csound.Catalog.Wave(Accordeon(..),
+	SharcInstr,
+	shViolin, shViolinPizzicato, shViolinMuted, shViolinMarteleBowing, shViolinsEnsemble, shViola, shViolaPizzicato, shViolaMuted,
+    shViolaMarteleBowing, shTuba, shTromboneMuted, shTrombone, shPiccolo, shOboe, shFrenchHornMuted, shFrenchHorn, shFlute,
+    shEnglishHorn, shClarinetEflat, shTrumpetMutedC, shTrumpetC, shContrabassClarinet, shContrabassoon, shCello, shCelloPizzicato,
+    shCelloMuted, shCelloMarteleBowing, shContrabassPizzicato, shContrabassMuted, shContrabassMarteleBowing, shContrabass,
+    shClarinet, shBassTrombone, shBassClarinet, shBassoon, shBassFlute, shTrumpetBach, shAltoTrombone, shAltoFlute)
 
 import Data.Char
 
@@ -1356,3 +1373,41 @@ wind = Patch
 ------------------------------------
 -- drums
 
+------------------------------------
+-- SHARC patches
+
+-- | Solo instrument.
+soloSharc :: SharcInstr -> Patch2
+soloSharc instr = Patch 
+    { patchInstr = fmap fromMono . onCps (C.soloSharcOsc instr)
+    , patchFx    = fx1 0.25 smallHall2
+    }
+
+-- | Instrumet played in ensemble (with chorus).
+orcSharc :: SharcInstr -> Patch2
+orcSharc instr = Patch 
+    { patchInstr = fmap fromMono . onCps (C.orcSharcOsc instr)
+    , patchFx    = fx1 0.25 largeHall2
+    }
+
+-- | Pad orchestra instrument.
+padSharc :: SharcInstr -> Patch2
+padSharc instr = Patch 
+    { patchInstr = fmap fromMono . onCps (C.padSharcOsc instr)
+    , patchFx    = fx1 0.35 largeHall2
+    }
+
+-- | Pad solo instrument.`
+purePadSharc :: SharcInstr -> Patch2
+purePadSharc instr = Patch 
+    { patchInstr = fmap fromMono . onCps (C.purePadSharcOsc instr)
+    , patchFx    = fx1 0.35 largeHall2
+    }
+
+-- | Dream Pad patch made with SHARC oscillators.
+dreamSharc :: SharcInstr -> Patch2
+dreamSharc instr = dreamPadBy (\cps -> C.rndSigSharcOsc instr (ir cps) cps)
+
+-- | Dream Pad patch made with SHARC oscillators.
+dreamSharc' :: SharcInstr -> Sig -> Patch2
+dreamSharc' instr brightness = dreamPadBy' brightness (\cps -> C.rndSigSharcOsc instr (ir cps) cps) 

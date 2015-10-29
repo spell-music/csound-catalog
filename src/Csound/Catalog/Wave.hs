@@ -93,6 +93,25 @@ module Csound.Catalog.Wave(
     dreamPad, underwaterPad, lightIsTooBrightPad, whaleSongPad,
     dreamPadBy,
 
+    -- * SHARC instruments
+    -- | SHARC ported to Csound. SHARC is a database of musical timbre information by Gregory Sandell.
+    -- It's a collection of sustain notes for real orchestra instruments.
+
+    -- ** Oscillators
+    sharcOsc, sigSharcOsc, rndSharcOsc, rndSigSharcOsc,
+    soloSharcOsc, orcSharcOsc, purePadSharcOsc, padSharcOsc,
+
+    -- ** Instriments
+    SharcInstr(..),
+    shViolin, shViolinPizzicato, shViolinMuted, shViolinMarteleBowing, shViolinsEnsemble, shViola, shViolaPizzicato, shViolaMuted,
+    shViolaMarteleBowing, shTuba, shTromboneMuted, shTrombone, shPiccolo, shOboe, shFrenchHornMuted, shFrenchHorn, shFlute,
+    shEnglishHorn, shClarinetEflat, shTrumpetMutedC, shTrumpetC, shContrabassClarinet, shContrabassoon, shCello, shCelloPizzicato,
+    shCelloMuted, shCelloMarteleBowing, shContrabassPizzicato, shContrabassMuted, shContrabassMarteleBowing, shContrabass,
+    shClarinet, shBassTrombone, shBassClarinet, shBassoon, shBassFlute, shTrumpetBach, shAltoTrombone, shAltoFlute,
+
+    -- ** Low-level getters
+    getInstrTab, note2sig, note2tab,
+
     -- * Other instruments
     okComputer, deepBass
 
@@ -117,6 +136,7 @@ import Csound.Catalog.Wave.Bitwig
 import Csound.Catalog.Wave.Misc
 
 import Csound.Catalog.Reson
+import Csound.Catalog.Wave.Sharc
 
 -- | 
 -- > nightPad fadeInTime cps
