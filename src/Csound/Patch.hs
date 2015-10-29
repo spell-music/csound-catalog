@@ -15,6 +15,7 @@ module Csound.Patch(
 	amPiano, fmPiano, 
 	epiano2, epianoHeavy, epianoBright,
 	vibraphonePiano1, vibraphonePiano2,
+	addHammer,
 
 	-- * Organ
 	cathedralOrgan, toneWheelOrgan, 
@@ -149,7 +150,7 @@ module Csound.Patch(
     shClarinet, shBassTrombone, shBassClarinet, shBassoon, shBassFlute, shTrumpetBach, shAltoTrombone, shAltoFlute,
 
 	-- * X-rays
-	pulseWidth, xanadu, alienIsAngry, noiz, blue, black, simpleMarimba, okComputer, noiseBell,
+	pulseWidth, xanadu, alienIsAngry, noiz, blue, black, simpleMarimba, impulseMarimba1, impulseMarimba2, okComputer, noiseBell,
 
 	-- * Robotic vowels
 	robotVowels, robotLoopVowels, robotVowel,
@@ -244,20 +245,24 @@ fmPiano = Patch
 	{ patchInstr = at fromMono . mul 0.75 . onCps (C.fmFlavio 6 3)
 	, patchFx    = fx1 0.15 smallHall2 }
 
-epiano2 = Patch 
+epiano2 = addHammer 0.15 $ Patch 
 	{ patchInstr = mul 1.125 . at fromMono . (onCps $ C.epiano [C.EpianoOsc 4 5 1 1, C.EpianoOsc 8 10 2.01 1])
 	, patchFx    = fx1 0.25 smallHall2 }
 
-epianoHeavy = Patch 
+epianoHeavy = addHammer 0.15 $ Patch 
 	{ patchInstr = mul 1.125 . at fromMono . (onCps $ C.epiano [C.EpianoOsc 4 5 1 1, C.EpianoOsc 8 10 2.01 1, C.EpianoOsc 8 15 0.5 0.5])
 	, patchFx    = fx1 0.2 smallHall2 }
 
-epianoBright = Patch 
+epianoBright = addHammer 0.15 $ Patch 
 	{ patchInstr = mul 1.12 . at fromMono . (onCps $ C.epiano [C.EpianoOsc 4 5 1 1, C.EpianoOsc 8 10 3.01 1, C.EpianoOsc 8 15 5 0.5, C.EpianoOsc 8 4 7 0.3])
 	, patchFx    = fx1 0.2 smallHall2 }
 
-vibraphonePiano1 = smallVibraphone1 { patchInstr = mul (1.5 * fadeOut 0.25) . at (mlp 6500 0.1). patchInstr smallVibraphone1 }
-vibraphonePiano2 = smallVibraphone2 { patchInstr = mul (1.5 * fadeOut 0.25) . at (mlp 6500 0.1). patchInstr smallVibraphone2 }
+vibraphonePiano1 = addHammer 0.15 $ smallVibraphone1 { patchInstr = mul (1.5 * fadeOut 0.25) . at (mlp 6500 0.1). patchInstr smallVibraphone1 }
+vibraphonePiano2 = addHammer 0.15 $ smallVibraphone2 { patchInstr = mul (1.5 * fadeOut 0.25) . at (mlp 6500 0.1). patchInstr smallVibraphone2 }
+
+-- | Adds a hammer strike sound. The first argument is the amount of hammer sound.
+addHammer :: Sig -> Patch2 -> Patch2
+addHammer amt = mixInstr amt impulseMarimba2
 
 ----------------------------------------------
 -- organs
@@ -1328,6 +1333,14 @@ simpleMarimba = Patch
 	{ patchInstr = at fromMono . mul (0.8 * fades 0.01 0.5). onCps (C.simpleMarimba 5)
 	, patchFx    = fx1 0.25 smallHall2 }
 	
+impulseMarimba1 = Patch
+	{ patchInstr = at fromMono . mul (0.8 * fadeOut 0.75). onCps C.impulseMarimba1
+	, patchFx    = fx1 0.3 smallHall2 }
+
+impulseMarimba2 = Patch
+	{ patchInstr = at fromMono . mul (0.8 * fadeOut 0.75). onCps C.impulseMarimba2
+	, patchFx    = fx1 0.3 smallHall2 }
+
 okComputer = Patch
 	{ patchInstr = \(amp, cps) -> (at fromMono . mul (0.75 * sig amp * fades 0.01 0.01) . at (mlp (1500 + sig amp * 8500) 0.1) . (C.okComputer . (/ 25))) (sig cps)
 	, patchFx    = fx1 0.25 id }
@@ -1411,3 +1424,4 @@ dreamSharc instr = dreamPadBy (\cps -> C.rndSigSharcOsc instr (ir cps) cps)
 -- | Dream Pad patch made with SHARC oscillators.
 dreamSharc' :: SharcInstr -> Sig -> Patch2
 dreamSharc' instr brightness = dreamPadBy' brightness (\cps -> C.rndSigSharcOsc instr (ir cps) cps) 
+

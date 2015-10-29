@@ -2,7 +2,9 @@ module Csound.Catalog.Wave.Misc (
     okComputer, polySynthFx, polySynth,
     dreamPad, underwaterPad, lightIsTooBrightPad, whaleSongPad,
     dreamPadBy,
-    deepBass
+    deepBass,
+
+    impulseMarimba1, impulseMarimba2
 ) where
 
 import Csound.Base 
@@ -69,3 +71,12 @@ genDreamPadInstr mkOsc brightness x = do
         vibLfo2 = lfo2 0.007
 
 deepBass x = mul 0.5 $ at (hp1 45) $ at (\x -> dam x 0.45 2 2 0.01 0.01) $  mul (xeg 0.005 0.6 1 0.05) $ sum [(filt 2 lp 275 0.25) (saw $ x * 0.5), osc (x * 0.5)]
+
+impulseMarimba1 :: Sig -> Sig
+impulseMarimba1 cps = mul 4 $ at (mlp cps 0.95) $ impulse 0
+
+impulseMarimba2 :: Sig -> Sig
+impulseMarimba2 cps = bat (bp  cps  120) $ impulse 0
+
+
+

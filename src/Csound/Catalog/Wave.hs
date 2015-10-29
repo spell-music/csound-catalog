@@ -113,7 +113,8 @@ module Csound.Catalog.Wave(
     getInstrTab, note2sig, note2tab,
 
     -- * Other instruments
-    okComputer, deepBass
+    okComputer, deepBass,
+    impulseMarimba1, impulseMarimba2
 
 ) where
 
