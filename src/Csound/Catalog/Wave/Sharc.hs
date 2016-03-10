@@ -3,6 +3,10 @@ module Csound.Catalog.Wave.Sharc(
     sharcOsc, sigSharcOsc, rndSharcOsc, rndSigSharcOsc,
     soloSharcOsc, orcSharcOsc, purePadSharcOsc, padSharcOsc,
 
+    -- * Padsynth
+    PadSharcSpec(..), padsynthSharcOsc, padsynthSharcOsc2,
+    padsynthSharcOsc', padsynthSharcOsc2',
+
     -- * Instriments
     SharcInstr(..),
     shViolin, shViolinPizzicato, shViolinMuted, shViolinMarteleBowing, shViolinsEnsemble, shViola, shViolaPizzicato, shViolaMuted,
@@ -30,7 +34,7 @@ deg x = 180 * x / pi
 
 harmonics2tab harmonics = sines3 $ fmap (\h -> (fromIntegral $ Sh.harmonicId h, Sh.harmonicAmplitude h, deg $ Sh.harmonicPhase h)) harmonics
 
--- | Get instrument wae table by midi pitch number.
+-- | Get instrument wave table by midi pitch number.
 getInstrTab :: SharcInstr -> Int -> Tab
 getInstrTab (SharcInstr instr) n = note2tab $ Sh.instrNotes instr !! idx
     where
@@ -95,6 +99,75 @@ purePadSharcOsc instr cps = mul (fades 0.65 0.75) $ rndSharcOsc instr cps
 -- | Plays orchestrated instrument with pad-like envelope
 padSharcOsc :: SharcInstr -> D -> SE Sig
 padSharcOsc instr cps = mul (fades 0.65 0.75) $ uni (rndSharcOsc instr . ir) (sig cps)
+
+---------------------------------------------------------------------------
+-- padsynth
+
+data PadSharcSpec = PadSharcSpec {
+        padSharcBandwidth :: Double,
+        padSharcSize      :: Int
+    }
+
+instance Default PadSharcSpec where
+    def = PadSharcSpec 15 8
+
+padsynthSharcOsc :: SharcInstr -> D -> SE Sig
+padsynthSharcOsc = padsynthSharcOsc' def
+
+padsynthSharcOsc2 :: SharcInstr -> D -> SE Sig2
+padsynthSharcOsc2 = padsynthSharcOsc2' def
+
+padsynthSharcOsc2' :: PadSharcSpec -> SharcInstr -> D -> SE Sig2
+padsynthSharcOsc2' spec instr = toStereoOsc (padsynthSharcOsc' spec instr)
+
+padsynthSharcOsc' :: PadSharcSpec -> SharcInstr -> D -> SE Sig
+padsynthSharcOsc' spec instr freq = padsynthOscMultiCps (getSpecIntervals spec instr) freq
+
+getSpecIntervals spec (SharcInstr instr) = zip borderFreqs specs
+    where 
+        groups = splitTo (padSharcSize spec) (Sh.instrNotes instr)
+        medians = fmap getMedian groups
+        borders = fmap getBorder groups
+
+        specs   = fmap (note2padsynth $ padSharcBandwidth spec) medians
+        borderFreqs = fmap (Sh.pitchFund . Sh.notePitch) borders
+
+
+splitTo :: Int -> [a] -> [[a]]
+splitTo n as = go size as
+    where 
+        size = max 1 (length as `div` n)
+
+        go :: Int -> [a] -> [[a]]
+        go n bs
+            | null ys   = [xs]
+            | otherwise = xs : go n ys
+            where
+                (xs, ys) = splitAt n bs
+
+getMedian :: [a] -> a
+getMedian as
+    | null as   = error "getMedian: Csound.Catalog.Wave.Sharc.hs empty list"
+    | otherwise = as !! (length as `div` 2)
+
+getBorder :: [a] -> a
+getBorder as
+    | null as   = error "getMedian: Csound.Catalog.Wave.Sharc.hs empty list"
+    | otherwise = last as
+
+note2padsynth :: Double -> Sh.Note -> PadsynthSpec
+note2padsynth bandwidth note = (defPadsynthSpec bandwidth normAmps) { padsynthFundamental = Sh.pitchFund (Sh.notePitch note) }
+    where 
+        normAmps = fmap ( / maxAmp) amps
+        amps = fmap Sh.harmonicAmplitude $ Sh.noteHarmonics note
+        maxAmp = maximum amps
+
+
+toStereoOsc :: (a -> SE Sig) -> (a -> SE Sig2)
+toStereoOsc f x = do
+    left  <- f x
+    right <- f x
+    return (left, right)
 
 ---------------------------------------------------------------------------
 -- sharc instr

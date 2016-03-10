@@ -101,6 +101,10 @@ module Csound.Catalog.Wave(
     sharcOsc, sigSharcOsc, rndSharcOsc, rndSigSharcOsc,
     soloSharcOsc, orcSharcOsc, purePadSharcOsc, padSharcOsc,
 
+    -- ** Padsynth
+    PadSharcSpec(..), padsynthSharcOsc, padsynthSharcOsc2,
+    padsynthSharcOsc', padsynthSharcOsc2',
+
     -- ** Instriments
     SharcInstr(..),
     shViolin, shViolinPizzicato, shViolinMuted, shViolinMarteleBowing, shViolinsEnsemble, shViola, shViolaPizzicato, shViolaMuted,
