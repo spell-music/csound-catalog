@@ -118,7 +118,7 @@ padsynthSharcOsc2 :: SharcInstr -> D -> SE Sig2
 padsynthSharcOsc2 = padsynthSharcOsc2' def
 
 padsynthSharcOsc2' :: PadSharcSpec -> SharcInstr -> D -> SE Sig2
-padsynthSharcOsc2' spec instr = toStereoOsc (padsynthSharcOsc' spec instr)
+padsynthSharcOsc2' spec instr freq = padsynthOscMultiCps2 (getSpecIntervals spec instr) freq
 
 padsynthSharcOsc' :: PadSharcSpec -> SharcInstr -> D -> SE Sig
 padsynthSharcOsc' spec instr freq = padsynthOscMultiCps (getSpecIntervals spec instr) freq
