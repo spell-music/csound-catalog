@@ -8,7 +8,7 @@ module Csound.Catalog.Wave.Thor(
 
 	simpleBass, 
 
-	EpianoOsc(..), epiano, 
+	EpianoOsc(..), epiano, pianoEnv,
 
 	noisyChoir, thorWind, mildWind, boom, windWall, 
 
@@ -102,19 +102,20 @@ data EpianoOsc = EpianoOsc
 	, epianoOscWeight    :: Sig
 	}
 
+pianoEnv :: (D, D) -> Sig
+pianoEnv (amp, cps) = sig amp * leg 0.001 sust 0.25 rel
+	where
+ 		sust = maxB (amp + 2 + (0.7 - 3 * k ** 2)) 0.1
+ 		rel  = maxB ((amp / 10) + 0.05 - (k / 10)) 0.05
+ 		k    = cps / 3500
+
 epiano :: [EpianoOsc] -> (D, D) -> SE Sig
-epiano xs (amp, cps) = mul (sig amp * leg 0.001 sust 0 rel) $ at (mlp (2500 + 4500 * (leg 0.085 3 0 0.1)) 0.25) $
-	fmap sum $ mapM (\x -> mul (epianoOscWeight x) $ multiRndSE (epianoOscChorusNum x) (epianoOscChorusAmt x) (detune (epianoOscNum x) rndOsc) (sig cps)) xs
- -- (multiRndSE 4 5 rndOsc + multiRndSE 8 10 (detune (2.01) rndOsc))
- 	where 
- 		sust = amp + 2 + (0.7 - 3 * k ** 2)
- 		rel  = (amp / 10) + 0.05 - (k / 10)
- 		k    = cps / 1000
+epiano xs (amp, cps) = mul (pianoEnv (amp, cps)) $ at (mlp (2500 + 4500 * (leg 0.085 3 0 0.1)) 0.25) $
+	fmap sum $ mapM (\x -> mul (epianoOscWeight x) $ multiRndSE (epianoOscChorusNum x) (epianoOscChorusAmt x) (detune (epianoOscNum x) rndOsc) (sig cps)) xs 
 
 ------------------------------
 -- 5 noise
 
--- noisyChor numberOfFilters bandWidthRatio cps
 noisyChoir :: Int -> Sig -> Sig -> SE Sig
 noisyChoir n ratio cps = mul 0.5 $ genGhostChoir white [1, 1] [1, 0.5] n (5 + 300 ** ratio) cps
 

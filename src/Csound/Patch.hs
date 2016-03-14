@@ -142,6 +142,11 @@ module Csound.Patch(
 	SharcInstr,
 	soloSharc, orcSharc, padSharc, purePadSharc, dreamSharc, dreamSharc',
 
+	-- ** Padsynth instruments
+	psOrganSharc, psOrganSharc', psLargeOrganSharc, psLargeOrganSharc', psPianoSharc, psPianoSharc',
+	psPadSharc, psPadSharc', psSoftPadSharc, psSoftPadSharc',
+	PadSharcSpec(..),
+
 	-- ** concrete instruments
 	shViolin, shViolinPizzicato, shViolinMuted, shViolinMarteleBowing, shViolinsEnsemble, shViola, shViolaPizzicato, shViolaMuted,
     shViolaMarteleBowing, shTuba, shTromboneMuted, shTrombone, shPiccolo, shOboe, shFrenchHornMuted, shFrenchHorn, shFlute,
@@ -178,6 +183,7 @@ import Csound.Catalog.Wave(maleA, maleE, maleIY, maleO, maleOO, maleU, maleER, m
 
 import Csound.Catalog.Wave(Accordeon(..),
 	SharcInstr,
+	PadSharcSpec(..),
 	shViolin, shViolinPizzicato, shViolinMuted, shViolinMarteleBowing, shViolinsEnsemble, shViola, shViolaPizzicato, shViolaMuted,
     shViolaMarteleBowing, shTuba, shTromboneMuted, shTrombone, shPiccolo, shOboe, shFrenchHornMuted, shFrenchHorn, shFlute,
     shEnglishHorn, shClarinetEflat, shTrumpetMutedC, shTrumpetC, shContrabassClarinet, shContrabassoon, shCello, shCelloPizzicato,
@@ -616,7 +622,7 @@ razorLead' (RazorLead bright speed) = Patch
 	, patchFx    = fx1 0.35 smallHall2 }
 
 overtoneLeadFx :: Sig2 -> SE Sig2
-overtoneLeadFx x = fmap magicCave2 $ mixAt 0.2 (echo 0.25 0.45) (return x)
+overtoneLeadFx x = fmap magicCave2 $ mixAt 0.2 (echo 0.25 0.45) x
 
 overtoneLead :: Patch2
 overtoneLead = Patch
@@ -1424,4 +1430,59 @@ dreamSharc instr = dreamPadBy (\cps -> C.rndSigSharcOsc instr (ir cps) cps)
 -- | Dream Pad patch made with SHARC oscillators.
 dreamSharc' :: SharcInstr -> Sig -> Patch2
 dreamSharc' instr brightness = dreamPadBy' brightness (\cps -> C.rndSigSharcOsc instr (ir cps) cps) 
+
+
+type PadsynthBandwidth = Double
+
+psOrganSharc :: SharcInstr -> Patch2
+psOrganSharc = psOrganSharc' def
+
+psOrganSharc' :: PadSharcSpec -> SharcInstr -> Patch2
+psOrganSharc' spec sh = Patch 
+	{ patchInstr = mul (0.5 * fades 0.01 0.1) . onCps (C.padsynthSharcOsc2' spec sh)
+	, patchFx    = fx1 0.25 smallHall2
+	}
+
+psLargeOrganSharc :: SharcInstr -> Patch2
+psLargeOrganSharc = psLargeOrganSharc' def
+
+psLargeOrganSharc' :: PadSharcSpec -> SharcInstr -> Patch2
+psLargeOrganSharc' spec sh = Patch 
+	{ patchInstr = mul (0.65 * fades 0.01 0.1) . onCps (C.padsynthSharcOsc2' spec sh)
+	, patchFx    = fx1 0.35 largeHall2
+	}
+
+psPianoSharc :: SharcInstr -> Patch2
+psPianoSharc = psPianoSharc' def
+
+psPianoSharc' :: PadSharcSpec -> SharcInstr -> Patch2
+psPianoSharc' spec sh = Patch 
+	{ patchInstr = \ampCps -> mul (0.75 * C.pianoEnv ampCps) $ onCps (C.padsynthSharcOsc2' spec sh) ampCps
+	, patchFx    = fx1 0.15 smallHall2
+	}
+
+psPadSharc :: SharcInstr -> Patch2
+psPadSharc = psPadSharc' def
+
+psPadSharc' :: PadSharcSpec -> SharcInstr -> Patch2
+psPadSharc' spec sh = Patch 
+	{ patchInstr = \ampCps -> mul (0.45 * fades 0.5 (0.6 + rel ampCps)) $ onCps (bat (lp (0.3 * (sig $ snd ampCps) + 2500 + 2000 * fades 0.15 (0.6 + rel ampCps) + 150 * slope 0.75 0.5 * osc 8) 15) . C.padsynthSharcOsc2' spec sh) ampCps
+	, patchFx    =  [FxSpec 0.25 (return . largeHall2), FxSpec 0.3 (at $ echo 0.125 0.65)]
+	}
+	where 
+		rel (amp, cps) = amp - cps / 3500
+
+psSoftPadSharc :: SharcInstr -> Patch2
+psSoftPadSharc = psSoftPadSharc' def
+
+psSoftPadSharc' :: PadSharcSpec -> SharcInstr -> Patch2
+psSoftPadSharc' spec sh = Patch 
+	{ patchInstr = \ampCps -> mul (0.65 * fades 0.5 (0.6 + rel ampCps)) $ onCps (at (mlp (0.3 * (sig $ snd ampCps) + 2500 + 2000 * fades 0.15 (0.6 + rel ampCps) + 350 * slope 0.75 0.5 * osc 8) 0.15) . C.padsynthSharcOsc2' spec sh) ampCps
+	, patchFx    =  [FxSpec 0.25 (return . largeHall2), FxSpec 0.3 (at $ echo 0.125 0.65)]
+	}
+	where 
+		rel (amp, cps) = amp - cps / 3500
+
+
+
 
