@@ -165,6 +165,18 @@ module Csound.Patch(
 	psLargePianoSharcHifi,	
 	xpsLargePianoSharcHifi,
 
+	-- *** Vedic pads
+	-- | Deep spiritual pads.
+	vedicPad, vibhu, rishi, agni, prakriti, rajas, avatar, bhumi,
+
+	--- *** High resolution vedic pads
+	-- | Deep spiritual pads.
+	vedicPadHifi, vibhuHifi, rishiHifi, agniHifi, prakritiHifi, rajasHifi, avatarHifi, bhumiHifi,
+
+	--- *** Low resolution vedic pads
+-- | Deep spiritual pads.
+	vedicPadLofi, vibhuLofi, rishiLofi, agniLofi, prakritiLofi, rajasLofi, avatarLofi, bhumiLofi,
+
 	-- ** concrete instruments
 	shViolin, shViolinPizzicato, shViolinMuted, shViolinMarteleBowing, shViolinsEnsemble, shViola, shViolaPizzicato, shViolaMuted,
     shViolaMarteleBowing, shTuba, shTromboneMuted, shTrombone, shPiccolo, shOboe, shFrenchHornMuted, shFrenchHorn, shFlute,
@@ -1620,6 +1632,121 @@ psMagicSoftPadSharc' spec sh = Patch
     where 
         rel (amp, cps) = amp - cps / 3500
 
+-- | Deep spiritual drones.
+--
+-- > vedicPad sharcInstrument bandwidth
+--
+-- Good values for bandwidth lies in the interval [0, 120]
+vedicPad :: SharcInstr -> PadsynthBandwidth -> Patch2
+vedicPad instr bandwidth = mul 0.8 $ 
+	addPreFx 0.45 (pingPong 0.25 0.65 0.5) $ 
+	deepPad $ 
+	psSoftPadSharc' (def { padSharcBandwidth = bandwidth, padSharcSize = 15 })  instr
+
+-- | Deep spiritual drones. Contains twice as many ftables as for simple @vedicPad@.
+--
+-- > vedicPad sharcInstrument bandwidth
+--
+-- Good values for bandwidth lies in the interval [0, 120]
+vedicPadHifi :: SharcInstr -> PadsynthBandwidth -> Patch2
+vedicPadHifi instr bandwidth = mul 0.8 $ 
+	addPreFx 0.45 (pingPong 0.25 0.65 0.5) $ 
+	deepPad $ 
+	psSoftPadSharc' (def { padSharcBandwidth = bandwidth, padSharcSize = 32 })  instr
+
+-- | Deep spiritual drones. Contains only quater of ftables as for simple @vedicPad@.
+--
+-- > vedicPad sharcInstrument bandwidth
+--
+-- Good values for bandwidth lies in the interval [0, 120]
+vedicPadLofi :: SharcInstr -> PadsynthBandwidth -> Patch2
+vedicPadLofi instr bandwidth = mul 0.8 $ 
+	addPreFx 0.45 (pingPong 0.25 0.65 0.5) $ 
+	deepPad $ 
+	psSoftPadSharc' (def { padSharcBandwidth = bandwidth, padSharcSize = 4 })  instr
+
+-- | Eminent
+vibhu :: PadsynthBandwidth -> Patch2
+vibhu = vedicPad shAltoFlute
+
+-- | Wise
+rishi :: PadsynthBandwidth -> Patch2
+rishi = vedicPad shFlute
+
+-- | Fire
+agni :: PadsynthBandwidth -> Patch2
+agni  =  vedicPad shCello
+
+-- | Material nature
+prakriti :: PadsynthBandwidth -> Patch2
+prakriti = vedicPad shClarinet
+
+-- | Desire
+rajas :: PadsynthBandwidth -> Patch2
+rajas = vedicPad shViolin
+
+-- | the hero
+avatar :: PadsynthBandwidth -> Patch2
+avatar = vedicPad shFrenchHorn
+
+-- | Earth
+bhumi :: PadsynthBandwidth -> Patch2
+bhumi = vedicPad shViolinsEnsemble
 
 
+-- | Eminent
+vibhuHifi :: PadsynthBandwidth -> Patch2
+vibhuHifi = vedicPadHifi shAltoFlute
 
+-- | Wise
+rishiHifi :: PadsynthBandwidth -> Patch2
+rishiHifi = vedicPadHifi shFlute
+
+-- | Fire
+agniHifi :: PadsynthBandwidth -> Patch2
+agniHifi  =  vedicPadHifi shCello
+
+-- | Material nature
+prakritiHifi :: PadsynthBandwidth -> Patch2
+prakritiHifi = vedicPadHifi shClarinet
+
+-- | Desire
+rajasHifi :: PadsynthBandwidth -> Patch2
+rajasHifi = vedicPadHifi shViolin
+
+-- | the hero
+avatarHifi :: PadsynthBandwidth -> Patch2
+avatarHifi = vedicPadHifi shFrenchHorn
+
+-- | Earth
+bhumiHifi :: PadsynthBandwidth -> Patch2
+bhumiHifi = vedicPadHifi shViolinsEnsemble
+
+
+-- | Eminent
+vibhuLofi :: PadsynthBandwidth -> Patch2
+vibhuLofi = vedicPadLofi shAltoFlute
+
+-- | Wise
+rishiLofi :: PadsynthBandwidth -> Patch2
+rishiLofi = vedicPadLofi shFlute
+
+-- | Fire
+agniLofi :: PadsynthBandwidth -> Patch2
+agniLofi  =  vedicPadLofi shCello
+
+-- | Material nature
+prakritiLofi :: PadsynthBandwidth -> Patch2
+prakritiLofi = vedicPadLofi shClarinet
+
+-- | Desire
+rajasLofi :: PadsynthBandwidth -> Patch2
+rajasLofi = vedicPadLofi shViolin
+
+-- | the hero
+avatarLofi :: PadsynthBandwidth -> Patch2
+avatarLofi = vedicPadLofi shFrenchHorn
+
+-- | Earth
+bhumiLofi :: PadsynthBandwidth -> Patch2
+bhumiLofi = vedicPadLofi shViolinsEnsemble
