@@ -167,15 +167,15 @@ module Csound.Patch(
 
 	-- *** Vedic pads
 	-- | Deep spiritual pads.
-	vedicPad, vibhu, rishi, agni, prakriti, rajas, avatar, bhumi,
+	vedicPad, vibhu, rishi, agni, prakriti, rajas, avatara, bhumi,
 
 	--- *** High resolution vedic pads
 	-- | Deep spiritual pads.
-	vedicPadHifi, vibhuHifi, rishiHifi, agniHifi, prakritiHifi, rajasHifi, avatarHifi, bhumiHifi,
+	vedicPadHifi, vibhuHifi, rishiHifi, agniHifi, prakritiHifi, rajasHifi, avataraHifi, bhumiHifi,
 
 	--- *** Low resolution vedic pads
 -- | Deep spiritual pads.
-	vedicPadLofi, vibhuLofi, rishiLofi, agniLofi, prakritiLofi, rajasLofi, avatarLofi, bhumiLofi,
+	vedicPadLofi, vibhuLofi, rishiLofi, agniLofi, prakritiLofi, rajasLofi, avataraLofi, bhumiLofi,
 
 	-- ** concrete instruments
 	shViolin, shViolinPizzicato, shViolinMuted, shViolinMarteleBowing, shViolinsEnsemble, shViola, shViolaPizzicato, shViolaMuted,
@@ -1686,8 +1686,8 @@ rajas :: PadsynthBandwidth -> Patch2
 rajas = vedicPad shViolin
 
 -- | the hero
-avatar :: PadsynthBandwidth -> Patch2
-avatar = vedicPad shFrenchHorn
+avatara :: PadsynthBandwidth -> Patch2
+avatara = vedicPad shFrenchHorn
 
 -- | Earth
 bhumi :: PadsynthBandwidth -> Patch2
@@ -1715,8 +1715,8 @@ rajasHifi :: PadsynthBandwidth -> Patch2
 rajasHifi = vedicPadHifi shViolin
 
 -- | the hero
-avatarHifi :: PadsynthBandwidth -> Patch2
-avatarHifi = vedicPadHifi shFrenchHorn
+avataraHifi :: PadsynthBandwidth -> Patch2
+avataraHifi = vedicPadHifi shFrenchHorn
 
 -- | Earth
 bhumiHifi :: PadsynthBandwidth -> Patch2
@@ -1744,8 +1744,8 @@ rajasLofi :: PadsynthBandwidth -> Patch2
 rajasLofi = vedicPadLofi shViolin
 
 -- | the hero
-avatarLofi :: PadsynthBandwidth -> Patch2
-avatarLofi = vedicPadLofi shFrenchHorn
+avataraLofi :: PadsynthBandwidth -> Patch2
+avataraLofi = vedicPadLofi shFrenchHorn
 
 -- | Earth
 bhumiLofi :: PadsynthBandwidth -> Patch2
