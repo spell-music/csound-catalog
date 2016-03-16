@@ -8,7 +8,8 @@ module Csound.Catalog.Wave.Thor(
 
 	simpleBass, 
 
-	EpianoOsc(..), epiano, pianoEnv,
+	ReleaseTime,
+	EpianoOsc(..), epiano, pianoEnv, xpianoEnv,
 
 	noisyChoir, thorWind, mildWind, boom, windWall, 
 
@@ -95,6 +96,8 @@ pwEnsemble x = mul 0.3 $ at (mlp (3500 + x * 2) 0.1) $ mul (leg 0.5 0 1 1) $ sum
 ------------------------------
 -- 4 Multi osc (unision)
 
+type ReleaseTime = D
+
 data EpianoOsc = EpianoOsc 
 	{ epianoOscChorusNum :: Int
 	, epianoOscChorusAmt :: Sig
@@ -102,15 +105,22 @@ data EpianoOsc = EpianoOsc
 	, epianoOscWeight    :: Sig
 	}
 
-pianoEnv :: (D, D) -> Sig
-pianoEnv (amp, cps) = sig amp * leg 0.001 sust 0.25 rel
+xpianoEnv :: ReleaseTime -> (D, D) -> Sig
+xpianoEnv userRelease (amp, cps) = sig amp * xeg 0.01 sust 0.25 rel
 	where
  		sust = maxB (amp + 2 + (0.7 - 3 * k ** 2)) 0.1
- 		rel  = maxB ((amp / 10) + 0.05 - (k / 10)) 0.05
+ 		rel  = userRelease + maxB ((amp / 5) + 0.05 - (k / 10)) 0.02
  		k    = cps / 3500
 
-epiano :: [EpianoOsc] -> (D, D) -> SE Sig
-epiano xs (amp, cps) = mul (pianoEnv (amp, cps)) $ at (mlp (2500 + 4500 * (leg 0.085 3 0 0.1)) 0.25) $
+pianoEnv :: ReleaseTime -> (D, D) -> Sig
+pianoEnv userRelease (amp, cps) = sig amp * leg 0.001 sust 0.25 rel
+	where
+ 		sust = maxB (amp + 2 + (0.7 - 3 * k ** 2)) 0.1
+ 		rel  = userRelease + maxB ((amp / 5) + 0.05 - (k / 10)) 0.02
+ 		k    = cps / 3500
+
+epiano :: ReleaseTime -> [EpianoOsc] -> (D, D) -> SE Sig
+epiano releaseTime xs (amp, cps) = mul (pianoEnv releaseTime (amp, cps)) $ at (mlp (2500 + 4500 * (leg 0.085 3 0 0.1)) 0.25) $
 	fmap sum $ mapM (\x -> mul (epianoOscWeight x) $ multiRndSE (epianoOscChorusNum x) (epianoOscChorusAmt x) (detune (epianoOscNum x) rndOsc) (sig cps)) xs 
 
 ------------------------------

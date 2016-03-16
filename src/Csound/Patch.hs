@@ -146,19 +146,24 @@ module Csound.Patch(
 	PadSharcSpec(..),
 
 	psOrganSharc, psOrganSharc', psLargeOrganSharc, psLargeOrganSharc', psPianoSharc, psPianoSharc',
+	xpsPianoSharc, xpsPianoSharc',
 	psPadSharc, psPadSharc', psSoftPadSharc, psSoftPadSharc',
 	psMagicPadSharc, psMagicPadSharc', psMagicSoftPadSharc, psMagicSoftPadSharc',
 	psLargePianoSharc, psLargePianoSharc',
+	xpsLargePianoSharc,
+	xpsLargePianoSharc',
 
 	-- *** High resolution Padsynth instruments
 	psOrganSharcHifi,
 	psLargeOrganSharcHifi,
 	psPianoSharcHifi,
+	xpsPianoSharcHifi,
 	psPadSharcHifi,
 	psSoftPadSharcHifi,
 	psMagicPadSharcHifi,
 	psMagicSoftPadSharcHifi,
 	psLargePianoSharcHifi,	
+	xpsLargePianoSharcHifi,
 
 	-- ** concrete instruments
 	shViolin, shViolinPizzicato, shViolinMuted, shViolinMarteleBowing, shViolinsEnsemble, shViola, shViolaPizzicato, shViolaMuted,
@@ -195,6 +200,7 @@ import Csound.Catalog.Wave(maleA, maleE, maleIY, maleO, maleOO, maleU, maleER, m
     femaleA, femaleE, femaleIY, femaleO, femaleOO)
 
 import Csound.Catalog.Wave(Accordeon(..),
+	ReleaseTime,
 	SharcInstr,
 	PadSharcSpec(..),
 	shViolin, shViolinPizzicato, shViolinMuted, shViolinMarteleBowing, shViolinsEnsemble, shViola, shViolaPizzicato, shViolaMuted,
@@ -264,16 +270,19 @@ fmPiano = Patch
 	{ patchInstr = at fromMono . mul 0.75 . onCps (C.fmFlavio 6 3)
 	, patchFx    = fx1 0.15 smallHall2 }
 
+epianoReleaseTime :: ReleaseTime
+epianoReleaseTime = 0.25
+
 epiano2 = addHammer 0.15 $ Patch 
-	{ patchInstr = mul 1.125 . at fromMono . (onCps $ C.epiano [C.EpianoOsc 4 5 1 1, C.EpianoOsc 8 10 2.01 1])
+	{ patchInstr = mul 1.125 . at fromMono . (onCps $ C.epiano epianoReleaseTime [C.EpianoOsc 4 5 1 1, C.EpianoOsc 8 10 2.01 1])
 	, patchFx    = fx1 0.25 smallHall2 }
 
 epianoHeavy = addHammer 0.15 $ Patch 
-	{ patchInstr = mul 1.125 . at fromMono . (onCps $ C.epiano [C.EpianoOsc 4 5 1 1, C.EpianoOsc 8 10 2.01 1, C.EpianoOsc 8 15 0.5 0.5])
+	{ patchInstr = mul 1.125 . at fromMono . (onCps $ C.epiano epianoReleaseTime [C.EpianoOsc 4 5 1 1, C.EpianoOsc 8 10 2.01 1, C.EpianoOsc 8 15 0.5 0.5])
 	, patchFx    = fx1 0.2 smallHall2 }
 
 epianoBright = addHammer 0.15 $ Patch 
-	{ patchInstr = mul 1.12 . at fromMono . (onCps $ C.epiano [C.EpianoOsc 4 5 1 1, C.EpianoOsc 8 10 3.01 1, C.EpianoOsc 8 15 5 0.5, C.EpianoOsc 8 4 7 0.3])
+	{ patchInstr = mul 1.12 . at fromMono . (onCps $ C.epiano epianoReleaseTime [C.EpianoOsc 4 5 1 1, C.EpianoOsc 8 10 3.01 1, C.EpianoOsc 8 15 5 0.5, C.EpianoOsc 8 4 7 0.3])
 	, patchFx    = fx1 0.2 smallHall2 }
 
 vibraphonePiano1 = addHammer 0.15 $ smallVibraphone1 { patchInstr = mul (1.5 * fadeOut 0.25) . at (mlp 6500 0.1). patchInstr smallVibraphone1 }
@@ -1480,32 +1489,64 @@ psLargeOrganSharc' spec sh = Patch
 	}
 
 -- | Padsynth instrument with piano-like amplitude envelope.
-psPianoSharc :: SharcInstr -> Patch2
+psPianoSharc :: ReleaseTime -> SharcInstr -> Patch2
 psPianoSharc = psPianoSharc' def
 
 -- | High resolution Padsynth instrument with piano-like amplitude envelope.
-psPianoSharcHifi :: SharcInstr -> Patch2
+psPianoSharcHifi :: ReleaseTime -> SharcInstr -> Patch2
 psPianoSharcHifi = psPianoSharc' hiDef
  
 -- | Padsynth instrument with piano-like amplitude envelope. We can specify aux parameters.
-psPianoSharc' :: PadSharcSpec -> SharcInstr -> Patch2
-psPianoSharc' spec sh = Patch 
-    { patchInstr = \ampCps -> mul (0.75 * C.pianoEnv ampCps) $ onCps (C.padsynthSharcOsc2' spec sh) ampCps
+psPianoSharc' :: PadSharcSpec -> ReleaseTime -> SharcInstr -> Patch2
+psPianoSharc' spec releaseTime sh = Patch 
+    { patchInstr = \ampCps -> mul (0.75 * C.pianoEnv releaseTime ampCps) $ onCps (C.padsynthSharcOsc2' spec sh) ampCps
     , patchFx    = [FxSpec 0.15 (return . smallHall2), FxSpec 1 (return . (at $ mul 1.4 . saturator 0.75))]
     }
 
+
 -- | Padsynth instrument with piano-like amplitude envelope.
-psLargePianoSharc :: SharcInstr -> Patch2
+xpsPianoSharc :: ReleaseTime -> SharcInstr -> Patch2
+xpsPianoSharc = xpsPianoSharc' def
+
+-- | High resolution Padsynth instrument with piano-like amplitude envelope.
+xpsPianoSharcHifi :: ReleaseTime -> SharcInstr -> Patch2
+xpsPianoSharcHifi = xpsPianoSharc' hiDef
+
+-- | Padsynth instrument with piano-like amplitude envelope. We can specify aux parameters.
+xpsPianoSharc' :: PadSharcSpec -> ReleaseTime -> SharcInstr -> Patch2
+xpsPianoSharc' spec releaseTime sh = addHammer 0.12 $ Patch 
+    { patchInstr = \ampCps -> mul (0.75 * C.xpianoEnv releaseTime ampCps) $ onCps (C.padsynthSharcOsc2' spec sh) ampCps
+    , patchFx    = [FxSpec 0.15 (return . smallHall2), FxSpec 1 (return . (at $ mul 1.4 . saturator 0.75))]
+    }
+
+
+-- | Padsynth instrument with piano-like amplitude envelope.
+psLargePianoSharc :: ReleaseTime -> SharcInstr -> Patch2
 psLargePianoSharc = psLargePianoSharc' def
 
 -- | High resolution Padsynth instrument with piano-like amplitude envelope.
-psLargePianoSharcHifi :: SharcInstr -> Patch2
+psLargePianoSharcHifi :: ReleaseTime -> SharcInstr -> Patch2
 psLargePianoSharcHifi = psLargePianoSharc' hiDef
 
 -- | Padsynth instrument with piano-like amplitude envelope. We can specify aux parameters.
-psLargePianoSharc' :: PadSharcSpec -> SharcInstr -> Patch2
-psLargePianoSharc' spec sh = Patch 
-    { patchInstr = \ampCps -> mul (0.75 * C.pianoEnv ampCps) $ onCps (C.padsynthSharcOsc2' spec sh) ampCps
+psLargePianoSharc' :: PadSharcSpec -> ReleaseTime -> SharcInstr -> Patch2
+psLargePianoSharc' spec releaseTime sh = Patch 
+    { patchInstr = \ampCps -> mul (0.75 * C.pianoEnv releaseTime ampCps) $ onCps (C.padsynthSharcOsc2' spec sh) ampCps
+    , patchFx    = [FxSpec 0.15 (return . largeHall2), FxSpec 1 (return . (at $ mul 1.4 . saturator 0.75))]
+    }
+
+-- | Padsynth instrument with piano-like amplitude envelope.
+xpsLargePianoSharc :: ReleaseTime -> SharcInstr -> Patch2
+xpsLargePianoSharc = xpsLargePianoSharc' def
+
+-- | High resolution Padsynth instrument with piano-like amplitude envelope.
+xpsLargePianoSharcHifi :: ReleaseTime -> SharcInstr -> Patch2
+xpsLargePianoSharcHifi = xpsLargePianoSharc' hiDef
+
+-- | Padsynth instrument with piano-like amplitude envelope. We can specify aux parameters.
+xpsLargePianoSharc' :: PadSharcSpec -> ReleaseTime -> SharcInstr -> Patch2
+xpsLargePianoSharc' spec releaseTime sh = Patch 
+    { patchInstr = \ampCps -> mul (0.75 * C.xpianoEnv releaseTime ampCps) $ onCps (C.padsynthSharcOsc2' spec sh) ampCps
     , patchFx    = [FxSpec 0.15 (return . largeHall2), FxSpec 1 (return . (at $ mul 1.4 . saturator 0.75))]
     }
 

@@ -77,7 +77,8 @@ module Csound.Catalog.Wave(
 
     simpleBass, 
 
-    EpianoOsc(..), epiano, pianoEnv,
+    ReleaseTime,
+    EpianoOsc(..), epiano, pianoEnv, xpianoEnv,
 
     noisyChoir, thorWind, mildWind, boom, windWall, 
 
