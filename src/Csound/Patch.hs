@@ -153,6 +153,10 @@ module Csound.Patch(
 	xpsLargePianoSharc,
 	xpsLargePianoSharc',
 
+	-- *** Deep pads
+	psDeepPadSharc, psDeepPadSharc', psDeepSoftPadSharc, psDeepSoftPadSharc',
+	psDeepMagicPadSharc, psDeepMagicPadSharc', psDeepMagicSoftPadSharc, psDeepMagicSoftPadSharc',
+
 	-- *** High resolution Padsynth instruments
 	psOrganSharcHifi,
 	psLargeOrganSharcHifi,
@@ -1573,13 +1577,25 @@ psPadSharcHifi = psPadSharc' hiDef
 -- | Padsynth instrument with pad-like amplitude envelope.
 psPadSharc' :: PadSharcSpec -> SharcInstr -> Patch2
 psPadSharc' spec sh = Patch 
-	{ patchInstr = \ampCps -> mul (0.45 * fades 0.5 (0.6 + rel ampCps)) $ onCps (bat (lp (0.3 * (sig $ snd ampCps) + 2500 + 2000 * fades 0.15 (0.6 + rel ampCps) + 50 * slope 0.75 0.5 * osc 8) 15) . C.padsynthSharcOsc2' spec sh) ampCps
+	{ patchInstr = \ampCps -> mul (0.45 * fades 0.5 (0.6 + rel ampCps)) $ onCps (at (\x -> lowpass2 x (0.3 * (sig $ snd ampCps) + 2500 + 2000 * fades 0.15 (0.6 + rel ampCps) + 80 * slope 0.75 0.5 * osc 8) 15) . C.padsynthSharcOsc2' spec sh) ampCps
 	, patchFx    =  [FxSpec 0.25 (return . largeHall2), FxSpec 0.5 (return . (at $ mul 1.6 . saturator 0.75)), FxSpec 0.3 (at $ echo 0.125 0.65)]
 	}
 	where 
 		rel (amp, cps) = amp - cps / 3500
 
--- | Padsynth instrument with pad-like amplitude envelope and moog filter (resource hungry).
+-- | Padsynth instrument with pad-like amplitude envelope. Plays a note and one octave below it.
+psDeepPadSharc :: SharcInstr -> Patch2
+psDeepPadSharc = psDeepPadSharc' def
+
+psDeepPadSharc' :: PadSharcSpec -> SharcInstr -> Patch2
+psDeepPadSharc' spec sh = Patch 
+	{ patchInstr = \ampCps -> mul (0.45 * fades 0.5 (0.6 + rel ampCps)) $ onCps (at (\x -> lowpass2 x (0.3 * (sig $ snd ampCps) + 2500 + 2000 * fades 0.15 (0.6 + rel ampCps) + 80 * slope 0.75 0.5 * osc 8) 15) . (\x -> 0.5 * (C.padsynthSharcOsc2' spec sh x + C.padsynthSharcOsc2' spec sh (x / 2)))) ampCps
+	, patchFx    =  [FxSpec 0.25 (return . largeHall2), FxSpec 0.5 (return . (at $ mul 1.6 . saturator 0.75)), FxSpec 0.3 (at $ echo 0.125 0.65)]
+	}
+	where 
+		rel (amp, cps) = amp - cps / 3500
+
+-- | Padsynth instrument with pad-like amplitude envelope and moog filter.
 psSoftPadSharc :: SharcInstr -> Patch2
 psSoftPadSharc = psSoftPadSharc' def
 
@@ -1587,11 +1603,23 @@ psSoftPadSharc = psSoftPadSharc' def
 psSoftPadSharcHifi :: SharcInstr -> Patch2
 psSoftPadSharcHifi = psSoftPadSharc' hiDef
 
--- | Padsynth instrument with pad-like amplitude envelope and moog filter (resource hungry).
+-- | Padsynth instrument with pad-like amplitude envelope and moog filter.
 -- We can specify aux parameters.
 psSoftPadSharc' :: PadSharcSpec -> SharcInstr -> Patch2
 psSoftPadSharc' spec sh = Patch 
     { patchInstr = \ampCps -> mul (0.65 * fades 0.5 (0.6 + rel ampCps)) $ onCps (at (mlp (0.3 * (sig $ snd ampCps) + 2300 + 2000 * fades 0.15 (0.6 + rel ampCps) + 350 * slope 0.75 0.5 * osc 8) 0.15) . C.padsynthSharcOsc2' spec sh) ampCps
+    , patchFx    =  [FxSpec 0.25 (return . largeHall2), FxSpec 0.5 (return . (at $ mul 1.6 . saturator 0.75)), FxSpec 0.45 (at $ echo 0.125 0.65)]
+    }
+    where 
+        rel (amp, cps) = amp - cps / 3500
+
+-- | Padsynth instrument with pad-like amplitude envelope and moog filter. Plays a note and one octave below it.
+psDeepSoftPadSharc :: SharcInstr -> Patch2
+psDeepSoftPadSharc = psDeepSoftPadSharc' def
+
+psDeepSoftPadSharc' :: PadSharcSpec -> SharcInstr -> Patch2
+psDeepSoftPadSharc' spec sh = Patch 
+    { patchInstr = \ampCps -> mul (0.65 * fades 0.5 (0.6 + rel ampCps)) $ onCps (at (mlp (0.3 * (sig $ snd ampCps) + 2300 + 2000 * fades 0.15 (0.6 + rel ampCps) + 350 * slope 0.75 0.5 * osc 8) 0.15) . (\x -> 0.5 * (C.padsynthSharcOsc2' spec sh x + C.padsynthSharcOsc2' spec sh (x / 2)))) ampCps
     , patchFx    =  [FxSpec 0.25 (return . largeHall2), FxSpec 0.5 (return . (at $ mul 1.6 . saturator 0.75)), FxSpec 0.45 (at $ echo 0.125 0.65)]
     }
     where 
@@ -1608,11 +1636,24 @@ psMagicPadSharcHifi = psMagicPadSharc' hiDef
 -- | Padsynth instrument with pad-like amplitude envelope and @magicCave2@ reverb.
 psMagicPadSharc' :: PadSharcSpec -> SharcInstr -> Patch2
 psMagicPadSharc' spec sh = Patch 
-	{ patchInstr = \ampCps -> mul (0.45 * fades 0.5 (0.2 + rel ampCps)) $ onCps (bat (lp (0.3 * (sig $ snd ampCps) + 2500 + 2000 * fades 0.15 (0.6 + rel ampCps) + 50 * slope 0.75 0.5 * osc 8) 15) . C.padsynthSharcOsc2' spec sh) ampCps
+	{ patchInstr = \ampCps -> mul (0.45 * fades 0.5 (0.2 + rel ampCps)) $ onCps (at (\x -> lowpass2 x (0.3 * (sig $ snd ampCps) + 2500 + 2000 * fades 0.15 (0.6 + rel ampCps) + 50 * slope 0.75 0.5 * osc 8) 15) . C.padsynthSharcOsc2' spec sh) ampCps
 	, patchFx    =  [FxSpec 0.25 (return . magicCave2), FxSpec 0.5 (return . (at $ mul 1.6 . saturator 0.75)), FxSpec 0.3 (at $ echo 0.125 0.45)]
 	}
 	where 
 		rel (amp, cps) = amp - cps / 3500
+
+-- | Padsynth instrument with pad-like amplitude envelope and @magicCave2@ reverb. Plays a note and one octave below it.
+psDeepMagicPadSharc :: SharcInstr -> Patch2
+psDeepMagicPadSharc = psDeepMagicPadSharc' def
+
+-- | Padsynth instrument with pad-like amplitude envelope and @magicCave2@ reverb. Plays a note and one octave below it.
+psDeepMagicPadSharc' :: PadSharcSpec -> SharcInstr -> Patch2
+psDeepMagicPadSharc' spec sh = Patch 
+	{ patchInstr = \ampCps -> mul (0.45 * fades 0.5 (0.2 + rel ampCps)) $ onCps (at (\x -> lowpass2 x (0.3 * (sig $ snd ampCps) + 2500 + 2000 * fades 0.15 (0.6 + rel ampCps) + 50 * slope 0.75 0.5 * osc 8) 15) . (\x -> 0.5 * (C.padsynthSharcOsc2' spec sh x + C.padsynthSharcOsc2' spec sh (x / 2)))) ampCps
+	, patchFx    =  [FxSpec 0.25 (return . magicCave2), FxSpec 0.5 (return . (at $ mul 1.6 . saturator 0.75)), FxSpec 0.3 (at $ echo 0.125 0.45)]
+	}
+	where 
+		rel (amp, cps) = amp - cps / 3500		
 
 -- | Padsynth instrument with pad-like amplitude envelope and moog filter and @magicCave2@ reverb (resource hungry).
 psMagicSoftPadSharc :: SharcInstr -> Patch2
@@ -1627,6 +1668,21 @@ psMagicSoftPadSharcHifi = psMagicSoftPadSharc' hiDef
 psMagicSoftPadSharc' :: PadSharcSpec -> SharcInstr -> Patch2
 psMagicSoftPadSharc' spec sh = Patch 
     { patchInstr = \ampCps -> mul (0.65 * fades 0.5 (0.6 + rel ampCps)) $ onCps (at (mlp (0.3 * (sig $ snd ampCps) + 2300 + 2000 * fades 0.15 (0.6 + rel ampCps) + 350 * slope 0.75 0.5 * osc 8) 0.15) . C.padsynthSharcOsc2' spec sh) ampCps
+    , patchFx    =  [FxSpec 0.25 (return . magicCave2), FxSpec 0.5 (return . (at $ mul 1.6 . saturator 0.75)), FxSpec 0.45 (at $ echo 0.125 0.65)]
+    }
+    where 
+        rel (amp, cps) = amp - cps / 3500
+
+
+-- | Padsynth instrument with pad-like amplitude envelope and moog filter and @magicCave2@ reverb (resource hungry).
+psDeepMagicSoftPadSharc :: SharcInstr -> Patch2
+psDeepMagicSoftPadSharc = psDeepMagicSoftPadSharc' def
+
+-- | Padsynth instrument with pad-like amplitude envelope and moog filter and @magicCave2@ reverb (resource hungry).
+-- We can specify aux parameters.
+psDeepMagicSoftPadSharc' :: PadSharcSpec -> SharcInstr -> Patch2
+psDeepMagicSoftPadSharc' spec sh = Patch 
+    { patchInstr = \ampCps -> mul (0.65 * fades 0.5 (0.6 + rel ampCps)) $ onCps (at (mlp (0.3 * (sig $ snd ampCps) + 2300 + 2000 * fades 0.15 (0.6 + rel ampCps) + 350 * slope 0.75 0.5 * osc 8) 0.15) . (\x -> 0.5 * (C.padsynthSharcOsc2' spec sh x + C.padsynthSharcOsc2' spec sh (x / 2)))) ampCps
     , patchFx    =  [FxSpec 0.25 (return . magicCave2), FxSpec 0.5 (return . (at $ mul 1.6 . saturator 0.75)), FxSpec 0.45 (at $ echo 0.125 0.65)]
     }
     where 
