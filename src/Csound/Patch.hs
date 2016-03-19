@@ -176,7 +176,7 @@ module Csound.Patch(
 
 	-- *** Vedic pads
 	-- | Deep spiritual pads.
-	vedicPad, vibhu, rishi, agni, prakriti, rajas, avatara, bhumi,
+	vedicPad, vedicPadCfd, vedicPadCfd4, vibhu, rishi, agni, prakriti, rajas, avatara, bhumi,
 
 	--- *** High resolution vedic pads
 	-- | Deep spiritual pads.
@@ -1746,8 +1746,30 @@ psDeepMagicSoftPadSharc' spec sh = genPsPad magicCave2 psSoftPadFilter (psDeepOs
 vedicPad :: SharcInstr -> PadsynthBandwidth -> Patch2
 vedicPad instr bandwidth = mul 0.8 $ 
 	addPreFx 0.45 (pingPong 0.25 0.65 0.5) $ 
-	deepPad $ 
-	psSoftPadSharc' (def { padSharcBandwidth = bandwidth, padSharcSize = 15 })  instr
+	psDeepSoftPadSharc' (def { padSharcBandwidth = bandwidth, padSharcSize = 15 })  instr
+
+-- | Deep spiritual drones. Crossfade between two instruments.
+--
+-- > vedicPadCfd cfdLevel sharcInstrument1 sharcInstrument2 bandwidth
+--
+-- Good values for bandwidth lies in the interval [0, 120]
+vedicPadCfd :: Sig -> SharcInstr -> SharcInstr -> PadsynthBandwidth -> Patch2
+vedicPadCfd k instr1 instr2 bandwidth = mul 0.8 $ 
+	addPreFx 0.45 (pingPong 0.25 0.65 0.5) $ 
+	psDeepSoftPadSharcCfd' k (def { padSharcBandwidth = bandwidth, padSharcSize = 15 },  instr1) (def { padSharcBandwidth = bandwidth, padSharcSize = 15 },  instr2)
+
+-- | Deep spiritual drones. Crossfade between four instruments.
+--
+-- > vedicPadCfd4 cfdLevelX cfdLevelY sharcInstrument1 sharcInstrument2 sharcInstrument3 sharcInstrument4 bandwidth
+--
+-- Good values for bandwidth lies in the interval [0, 120]
+vedicPadCfd4 :: Sig -> Sig -> SharcInstr -> SharcInstr -> SharcInstr -> SharcInstr -> PadsynthBandwidth -> Patch2
+vedicPadCfd4 kX kY instr1 instr2 instr3 instr4 bandwidth = mul 0.8 $ 
+	addPreFx 0.45 (pingPong 0.25 0.65 0.5) $ 
+	psDeepSoftPadSharcCfd4' kX kY 
+		(def { padSharcBandwidth = bandwidth, padSharcSize = 15 },  instr1) (def { padSharcBandwidth = bandwidth, padSharcSize = 15 },  instr2)
+		(def { padSharcBandwidth = bandwidth, padSharcSize = 15 },  instr3) (def { padSharcBandwidth = bandwidth, padSharcSize = 15 },  instr4)
+
 
 -- | Deep spiritual drones. Contains twice as many ftables as for simple @vedicPad@.
 --
