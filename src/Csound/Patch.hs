@@ -157,6 +157,11 @@ module Csound.Patch(
 	psDeepPadSharc, psDeepPadSharc', psDeepSoftPadSharc, psDeepSoftPadSharc',
 	psDeepMagicPadSharc, psDeepMagicPadSharc', psDeepMagicSoftPadSharc, psDeepMagicSoftPadSharc',
 
+	--- *** Crossfades
+	psPadSharcCfd, psPadSharcCfd', psPadSharcCfd4, psPadSharcCfd4', psDeepPadSharcCfd, psDeepPadSharcCfd', 
+	psDeepPadSharcCfd4, psDeepPadSharcCfd4', psSoftPadSharcCfd, psSoftPadSharcCfd', psSoftPadSharcCfd4, psSoftPadSharcCfd4',
+	psDeepSoftPadSharcCfd, psDeepSoftPadSharcCfd', psDeepSoftPadSharcCfd4, psDeepSoftPadSharcCfd4',
+
 	-- *** High resolution Padsynth instruments
 	psOrganSharcHifi,
 	psLargeOrganSharcHifi,
@@ -1573,12 +1578,21 @@ psPadFilterBy rippleLevel q resonFilter ampCps = resonFilter (0.3 * (sig $ snd a
 psPadFilter = psPadFilterBy 75 15 (\cfq q x -> lowpass2 x cfq q) 
 psSoftPadFilter = psPadFilterBy 350 0.15 mlp
 
-psOsc spec sh x = C.padsynthSharcOsc2' spec sh x
-psDeepOsc spec sh x = 0.5 * (C.padsynthSharcOsc2' spec sh x + C.padsynthSharcOsc2' spec sh (x / 2))
+deepOsc :: (Num a, SigSpace a) => (D -> a) -> (D -> a)
+deepOsc f x = mul 0.5 (f x + f (x / 2))
 
-genPsPad :: (Sig2 -> Sig2) -> ((D, D) -> Sig -> Sig) -> (PadSharcSpec -> SharcInstr -> D -> SE Sig2) -> PadSharcSpec -> SharcInstr -> Patch2
-genPsPad effect filter wave spec sh =  Patch 
-	{ patchInstr = \ampCps -> mul (0.45 * fades 0.5 (0.6 + rel ampCps)) $ onCps (at (filter ampCps) . wave spec sh) ampCps
+psOsc spec sh x = C.padsynthSharcOsc2' spec sh x
+psDeepOsc spec sh = deepOsc (C.padsynthSharcOsc2' spec sh)
+
+psOscCfd koeff (spec1, sh1) (spec2, sh2) x = cfd koeff (C.padsynthSharcOsc2' spec1 sh1 x) (C.padsynthSharcOsc2' spec2 sh2 x)
+psOscCfd4 koeffX koeffY (spec1, sh1) (spec2, sh2) (spec3, sh3) (spec4, sh4) x = cfd4 koeffX koeffY (C.padsynthSharcOsc2' spec1 sh1 x) (C.padsynthSharcOsc2' spec2 sh2 x) (C.padsynthSharcOsc2' spec3 sh3 x) (C.padsynthSharcOsc2' spec4 sh4 x)
+
+psDeepOscCfd koeff (spec1, sh1) (spec2, sh2) = deepOsc (psOscCfd koeff (spec1, sh1) (spec2, sh2))
+psDeepOscCfd4 koeffX koeffY (spec1, sh1) (spec2, sh2) (spec3, sh3) (spec4, sh4) = deepOsc (psOscCfd4 koeffX koeffY (spec1, sh1) (spec2, sh2) (spec3, sh3) (spec4, sh4))
+
+genPsPad :: (Sig2 -> Sig2) -> ((D, D) -> Sig -> Sig) -> (D -> SE Sig2) -> Patch2
+genPsPad effect filter wave =  Patch 
+	{ patchInstr = \ampCps -> mul (0.45 * fades 0.5 (0.6 + rel ampCps)) $ onCps (at (filter ampCps) . wave) ampCps
 	, patchFx    =  [FxSpec 0.25 (return . effect), FxSpec 0.5 (return . (at $ mul 1.6 . saturator 0.75)), FxSpec 0.3 (at $ echo 0.125 0.65)]
 	}
 	where rel (amp, cps) = amp - cps / 3500
@@ -1593,14 +1607,43 @@ psPadSharcHifi = psPadSharc' hiDef
 
 -- | Padsynth instrument with pad-like amplitude envelope.
 psPadSharc' :: PadSharcSpec -> SharcInstr -> Patch2
-psPadSharc' = genPsPad largeHall2 psPadFilter psOsc
+psPadSharc' spec sh = genPsPad largeHall2 psPadFilter (psOsc spec sh)
 
 -- | Padsynth instrument with pad-like amplitude envelope. Plays a note and one octave below it.
 psDeepPadSharc :: SharcInstr -> Patch2
 psDeepPadSharc = psDeepPadSharc' def
 
 psDeepPadSharc' :: PadSharcSpec -> SharcInstr -> Patch2
-psDeepPadSharc' = genPsPad largeHall2 psPadFilter psDeepOsc
+psDeepPadSharc' spec sh = genPsPad largeHall2 psPadFilter (psDeepOsc spec sh)
+
+psPadSharcCfd :: Sig -> SharcInstr -> SharcInstr -> Patch2
+psPadSharcCfd k sh1 sh2 = psPadSharcCfd' k (def, sh1) (def, sh2)
+
+-- | Crossfade between timbres.
+psPadSharcCfd' :: Sig -> (PadSharcSpec, SharcInstr) -> (PadSharcSpec, SharcInstr) -> Patch2
+psPadSharcCfd' k spec1 spec2 = genPsPad largeHall2 psPadFilter (psOscCfd k spec1 spec2)
+
+psPadSharcCfd4 :: Sig -> Sig -> SharcInstr -> SharcInstr -> SharcInstr -> SharcInstr -> Patch2
+psPadSharcCfd4 k1 k2 sh1 sh2 sh3 sh4 = psPadSharcCfd4' k1 k2 (def, sh1) (def, sh2) (def, sh3) (def, sh4)
+
+-- | Crossfade between timbres.
+psPadSharcCfd4' :: Sig -> Sig -> (PadSharcSpec, SharcInstr) -> (PadSharcSpec, SharcInstr) -> (PadSharcSpec, SharcInstr) -> (PadSharcSpec, SharcInstr) -> Patch2
+psPadSharcCfd4' k1 k2  spec1 spec2 spec3 spec4 = genPsPad largeHall2 psPadFilter (psOscCfd4 k1 k2 spec1 spec2 spec3 spec4)
+
+psDeepPadSharcCfd :: Sig -> SharcInstr -> SharcInstr -> Patch2
+psDeepPadSharcCfd k sh1 sh2 = psDeepPadSharcCfd' k (def, sh1) (def, sh2)
+
+-- | Crossfade between timbres.
+psDeepPadSharcCfd' :: Sig -> (PadSharcSpec, SharcInstr) -> (PadSharcSpec, SharcInstr) -> Patch2
+psDeepPadSharcCfd' k spec1 spec2 = genPsPad largeHall2 psPadFilter (psDeepOscCfd k spec1 spec2)
+
+psDeepPadSharcCfd4 :: Sig -> Sig -> SharcInstr -> SharcInstr -> SharcInstr -> SharcInstr -> Patch2
+psDeepPadSharcCfd4 k1 k2 sh1 sh2 sh3 sh4 = psDeepPadSharcCfd4' k1 k2 (def, sh1) (def, sh2) (def, sh3) (def, sh4)
+
+-- | Crossfade between timbres.
+psDeepPadSharcCfd4' :: Sig -> Sig -> (PadSharcSpec, SharcInstr) -> (PadSharcSpec, SharcInstr) -> (PadSharcSpec, SharcInstr) -> (PadSharcSpec, SharcInstr) -> Patch2
+psDeepPadSharcCfd4' k1 k2  spec1 spec2 spec3 spec4 = genPsPad largeHall2 psPadFilter (psDeepOscCfd4 k1 k2 spec1 spec2 spec3 spec4)
+
 
 -- | Padsynth instrument with pad-like amplitude envelope and moog filter.
 psSoftPadSharc :: SharcInstr -> Patch2
@@ -1613,14 +1656,44 @@ psSoftPadSharcHifi = psSoftPadSharc' hiDef
 -- | Padsynth instrument with pad-like amplitude envelope and moog filter.
 -- We can specify aux parameters.
 psSoftPadSharc' :: PadSharcSpec -> SharcInstr -> Patch2
-psSoftPadSharc' = genPsPad largeHall2 psSoftPadFilter psOsc
+psSoftPadSharc' spec sh = genPsPad largeHall2 psSoftPadFilter (psOsc spec sh)
 
 -- | Padsynth instrument with pad-like amplitude envelope and moog filter. Plays a note and one octave below it.
 psDeepSoftPadSharc :: SharcInstr -> Patch2
 psDeepSoftPadSharc = psDeepSoftPadSharc' def
 
 psDeepSoftPadSharc' :: PadSharcSpec -> SharcInstr -> Patch2
-psDeepSoftPadSharc' = genPsPad largeHall2 psSoftPadFilter psDeepOsc
+psDeepSoftPadSharc' spec sh = genPsPad largeHall2 psSoftPadFilter (psDeepOsc spec sh)
+
+
+psSoftPadSharcCfd :: Sig -> SharcInstr -> SharcInstr -> Patch2
+psSoftPadSharcCfd k sh1 sh2 = psSoftPadSharcCfd' k (def, sh1) (def, sh2)
+
+-- | Crossfade between timbres.
+psSoftPadSharcCfd' :: Sig -> (PadSharcSpec, SharcInstr) -> (PadSharcSpec, SharcInstr) -> Patch2
+psSoftPadSharcCfd' k spec1 spec2 = genPsPad largeHall2 psSoftPadFilter (psOscCfd k spec1 spec2)
+
+psSoftPadSharcCfd4 :: Sig -> Sig -> SharcInstr -> SharcInstr -> SharcInstr -> SharcInstr -> Patch2
+psSoftPadSharcCfd4 k1 k2 sh1 sh2 sh3 sh4 = psSoftPadSharcCfd4' k1 k2 (def, sh1) (def, sh2) (def, sh3) (def, sh4)
+
+-- | Crossfade between timbres.
+psSoftPadSharcCfd4' :: Sig -> Sig -> (PadSharcSpec, SharcInstr) -> (PadSharcSpec, SharcInstr) -> (PadSharcSpec, SharcInstr) -> (PadSharcSpec, SharcInstr) -> Patch2
+psSoftPadSharcCfd4' k1 k2  spec1 spec2 spec3 spec4 = genPsPad largeHall2 psSoftPadFilter (psOscCfd4 k1 k2 spec1 spec2 spec3 spec4)
+
+psDeepSoftPadSharcCfd :: Sig -> SharcInstr -> SharcInstr -> Patch2
+psDeepSoftPadSharcCfd k sh1 sh2 = psDeepSoftPadSharcCfd' k (def, sh1) (def, sh2)
+
+-- | Crossfade between timbres.
+psDeepSoftPadSharcCfd' :: Sig -> (PadSharcSpec, SharcInstr) -> (PadSharcSpec, SharcInstr) -> Patch2
+psDeepSoftPadSharcCfd' k spec1 spec2 = genPsPad largeHall2 psSoftPadFilter (psDeepOscCfd k spec1 spec2)
+
+psDeepSoftPadSharcCfd4 :: Sig -> Sig -> SharcInstr -> SharcInstr -> SharcInstr -> SharcInstr -> Patch2
+psDeepSoftPadSharcCfd4 k1 k2 sh1 sh2 sh3 sh4 = psDeepSoftPadSharcCfd4' k1 k2 (def, sh1) (def, sh2) (def, sh3) (def, sh4)
+
+-- | Crossfade between timbres.
+psDeepSoftPadSharcCfd4' :: Sig -> Sig -> (PadSharcSpec, SharcInstr) -> (PadSharcSpec, SharcInstr) -> (PadSharcSpec, SharcInstr) -> (PadSharcSpec, SharcInstr) -> Patch2
+psDeepSoftPadSharcCfd4' k1 k2  spec1 spec2 spec3 spec4 = genPsPad largeHall2 psSoftPadFilter (psDeepOscCfd4 k1 k2 spec1 spec2 spec3 spec4)
+
 
 -- | Padsynth instrument with pad-like amplitude envelope and @magicCave2@ reverb.
 psMagicPadSharc :: SharcInstr -> Patch2
@@ -1632,7 +1705,7 @@ psMagicPadSharcHifi = psMagicPadSharc' hiDef
 
 -- | Padsynth instrument with pad-like amplitude envelope and @magicCave2@ reverb.
 psMagicPadSharc' :: PadSharcSpec -> SharcInstr -> Patch2
-psMagicPadSharc' = genPsPad magicCave2 psPadFilter psOsc
+psMagicPadSharc' spec sh = genPsPad magicCave2 psPadFilter (psOsc spec sh)
 
 -- | Padsynth instrument with pad-like amplitude envelope and @magicCave2@ reverb. Plays a note and one octave below it.
 psDeepMagicPadSharc :: SharcInstr -> Patch2
@@ -1640,7 +1713,7 @@ psDeepMagicPadSharc = psDeepMagicPadSharc' def
 
 -- | Padsynth instrument with pad-like amplitude envelope and @magicCave2@ reverb. Plays a note and one octave below it.
 psDeepMagicPadSharc' :: PadSharcSpec -> SharcInstr -> Patch2
-psDeepMagicPadSharc' = genPsPad magicCave2 psPadFilter psDeepOsc
+psDeepMagicPadSharc' spec sh = genPsPad magicCave2 psPadFilter (psDeepOsc spec sh)
 
 -- | Padsynth instrument with pad-like amplitude envelope and moog filter and @magicCave2@ reverb (resource hungry).
 psMagicSoftPadSharc :: SharcInstr -> Patch2
@@ -1653,7 +1726,7 @@ psMagicSoftPadSharcHifi = psMagicSoftPadSharc' hiDef
 -- | Padsynth instrument with pad-like amplitude envelope and moog filter and @magicCave2@ reverb (resource hungry).
 -- We can specify aux parameters.
 psMagicSoftPadSharc' :: PadSharcSpec -> SharcInstr -> Patch2
-psMagicSoftPadSharc' = genPsPad magicCave2 psSoftPadFilter psOsc
+psMagicSoftPadSharc' spec sh = genPsPad magicCave2 psSoftPadFilter (psOsc spec sh)
 
 
 -- | Padsynth instrument with pad-like amplitude envelope and moog filter and @magicCave2@ reverb (resource hungry).
@@ -1663,7 +1736,7 @@ psDeepMagicSoftPadSharc = psDeepMagicSoftPadSharc' def
 -- | Padsynth instrument with pad-like amplitude envelope and moog filter and @magicCave2@ reverb (resource hungry).
 -- We can specify aux parameters.
 psDeepMagicSoftPadSharc' :: PadSharcSpec -> SharcInstr -> Patch2
-psDeepMagicSoftPadSharc' = genPsPad magicCave2 psSoftPadFilter psDeepOsc
+psDeepMagicSoftPadSharc' spec sh = genPsPad magicCave2 psSoftPadFilter (psDeepOsc spec sh)
 
 -- | Deep spiritual drones.
 --
