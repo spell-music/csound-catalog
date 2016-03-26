@@ -33,6 +33,7 @@ module Csound.Patch(
 	Choir(..), choirA', choirO', choirU', choirE',
 
 	windSings, noisyChoir, longNoisyChoir, noisyChoir', longNoisyChoir', NoisyChoir(..),
+	noisyRise, noisySpiral, noisySpiral',
 
 	-- * Pad
 	pwPad, triPad, nightPad, overtonePad, caveOvertonePad,
@@ -1970,6 +1971,53 @@ rajasBhumi = vedicCfd shRajas shBhumi
 
 avataraBhumi :: PadsynthBandwidth -> Sig -> Patch2
 avataraBhumi = vedicCfd shAvatara shBhumi
+
+----------------------------------------
+-- noisy padsynth pads
+
+noisyRise :: Patch2
+noisyRise = Patch {
+		patchInstr = onCps $ \cps -> mul 0.24 $ wave cps,
+		patchFx    = [FxSpec 0.35 (return . largeHall2), FxSpec 0.5 (at $ echo 0.25 0.85)]
+	}
+	where		
+		wave x  = noisy x + pad x
+		noisy x = at (mul 0.3 . fromMono . bat (bp (x * 5) 23) . lp (300 + 2500 * linseg [0, 0.73, 0, 8, 3]) 14) white
+		pad x = envelope $ filter x $ padsynthOsc2 spec x + mul 0.15 (padsynthOsc2 spec (x * 5)) + mul 0.5 (padsynthOsc2 spec (x / 2))
+
+		envelope asig = mul (fades 0.5 0.7) asig
+		filter cps asig = at (bhp 30) $ bat (lp (200 + (cps + 3000)) 45) $ asig
+
+		spec = noisySpec
+
+noisySpiral :: Patch2
+noisySpiral = noisySpiral' 8
+
+-- | Oscillating noise:
+--
+-- > noisySpiral' finalSpeedOfOscillation
+noisySpiral' :: D -> Patch2
+noisySpiral' spiralSpeed = Patch {
+		patchInstr = onCps $ \cps -> mul 0.24 $ wave cps,
+		patchFx    = [FxSpec 0.15 (return . magicCave2), FxSpec 0.43 (at $ echo 0.35 0.85)]	
+	}
+	where
+		wave x  = noisy x + pad x
+		noisy x = at (mul 0.3 . fromMono . bat (bp (x * 5) 23) . lp (300 + 2500 * linseg [0, 0.73, 0, 8, 3] * uosc (expseg [0.25, 5, spiralSpeed])) 14) white
+		pad x = envelope $ filter x $ padsynthOsc2 spec x + mul 0.15 (padsynthOsc2 spec (x * 5)) + mul 0.5 (padsynthOsc2 spec (x / 2))
+		envelope asig = mul (fades 0.5 0.7) asig
+		filter cps asig = at (bhp 30) $ bat (lp (200 + (cps + 3000)) 45) $ asig
+
+		spec = noisySpec
+
+
+noisyHarms = [ 1,  1, 0.7600046992, 0.6199994683, 0.9399998784, 0.4400023818, 0.0600003302, 0.8499968648, 0.0899999291, 0.8199964762, 0.3199984133, 0.9400014281, 0.3000001907, 0.120003365, 0.1799997687, 0.5200006366]
+noisySpec  = defPadsynthSpec 82.2 noisyHarms
+
+
+-- dac $ mul 0.24 $ at (bhp 30) $ mixAt 0.15 magicCave2 $ mixAt 0.43 (echo 0.35 0.85) $ midi $ onMsg $ (\cps -> (bat (lp (200 + (cps + 3000)) 45) . mul (fades 0.5 0.7) . (\x -> (at (mul 0.3 . fromMono . bat (bp (x * 11) 23) . lp (300 + 2500 * linseg [0, 0.73, 0, 8, 3] * uosc (expseg [0.25, 5, 8])) 14) white) +  padsynthOsc2 spec x + mul 0.15 (padsynthOsc2 spec (x * 5)) + mul 0.5 (padsynthOsc2 spec (x / 2)))) cps)
+
+-- dac $ mul 0.24 $ at (bhp 30) $ mixAt 0.35 largeHall2 $ mixAt 0.5 (echo 0.25 0.85) $ midi $ onMsg $ (\cps -> (bat (lp (200 + (cps + 3000)) 45) . mul (fades 0.5 0.7) . (\x -> (at (mul 0.3 . fromMono . bat (bp (x * 5) 23) . lp (300 + 2500 * linseg [0, 0.73, 0, 8, 3]) 14) white) +  padsynthOsc2 spec x + mul 0.15 (padsynthOsc2 spec (x * 5)) + mul 0.5 (padsynthOsc2 spec (x / 2)))) cps)
 
 
 
