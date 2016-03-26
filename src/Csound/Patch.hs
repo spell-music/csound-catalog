@@ -1599,8 +1599,8 @@ psDeepOscCfd4 koeffX koeffY (spec1, sh1) (spec2, sh2) (spec3, sh3) (spec4, sh4) 
 
 genPsPad :: (Sig2 -> Sig2) -> ((D, D) -> Sig -> Sig) -> (D -> SE Sig2) -> Patch2
 genPsPad effect filter wave =  Patch 
-	{ patchInstr = \ampCps -> mul (0.45 * fades 0.5 (0.6 + rel ampCps)) $ onCps (at (filter ampCps) . wave) ampCps
-	, patchFx    =  [FxSpec 0.25 (return . effect), FxSpec 0.5 (return . (at $ mul 1.6 . saturator 0.75)), FxSpec 0.3 (at $ echo 0.125 0.65)]
+	{ patchInstr = \ampCps -> mul (1.2 * fades 0.5 (0.6 + rel ampCps)) $ onCps (at (filter ampCps) . wave) ampCps
+	, patchFx    =  [FxSpec 0.25 (return . effect), FxSpec 0.5 (return . (at $ mul 2.1 . saturator 0.75)), FxSpec 0.3 (at $ echo 0.125 0.65)]
 	}
 	where rel (amp, cps) = amp - cps / 3500
 
