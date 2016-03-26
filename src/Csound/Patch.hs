@@ -183,8 +183,14 @@ module Csound.Patch(
 	vedicPadHifi, vibhuHifi, rishiHifi, agniHifi, prakritiHifi, rajasHifi, avataraHifi, bhumiHifi,
 
 	--- *** Low resolution vedic pads
--- | Deep spiritual pads.
+	-- | Deep spiritual pads.
 	vedicPadLofi, vibhuLofi, rishiLofi, agniLofi, prakritiLofi, rajasLofi, avataraLofi, bhumiLofi,
+
+	--- *** Crossfade vedic pads
+	-- | Crossfade between deep spiritual pads. All pads take in padsynthBandwidth and crossfade level as parameters.
+	vibhuRishi, vibhuAgni, vibhuPrakriti, vibhuRajas, vibhuAvatara, vibhuBhumi, rishiAgni, rishiPrakriti,
+	rishiRajas, rishiAvatara, rishiBhumi, agniPrakriti, agniRajas, agniAvatara, agniBhumi, prakritiRajas,
+	prakritiAvatara, prakritiBhumi, rajasAvatara, rajasBhumi, avataraBhumi,
 
 	-- ** concrete instruments
 	shViolin, shViolinPizzicato, shViolinMuted, shViolinMarteleBowing, shViolinsEnsemble, shViola, shViolaPizzicato, shViolaMuted,
@@ -1738,6 +1744,10 @@ psDeepMagicSoftPadSharc = psDeepMagicSoftPadSharc' def
 psDeepMagicSoftPadSharc' :: PadSharcSpec -> SharcInstr -> Patch2
 psDeepMagicSoftPadSharc' spec sh = genPsPad magicCave2 psSoftPadFilter (psDeepOsc spec sh)
 
+vedicSize = 15
+vedicSizeHifi = 32
+vedicSizeLofi = 4
+
 -- | Deep spiritual drones.
 --
 -- > vedicPad sharcInstrument bandwidth
@@ -1795,32 +1805,45 @@ vedicPadLofi instr bandwidth = mul 0.8 $
 
 -- | Eminent
 vibhu :: PadsynthBandwidth -> Patch2
-vibhu = vedicPad shAltoFlute
+vibhu = vedicPad shVibhu
+
+shVibhu = shAltoFlute
 
 -- | Wise
 rishi :: PadsynthBandwidth -> Patch2
-rishi = vedicPad shFlute
+rishi = vedicPad shRishi
+
+shRishi = shFlute
 
 -- | Fire
 agni :: PadsynthBandwidth -> Patch2
-agni  =  vedicPad shCello
+agni  =  vedicPad shAgni
+
+shAgni = shCello
 
 -- | Material nature
 prakriti :: PadsynthBandwidth -> Patch2
-prakriti = vedicPad shClarinet
+prakriti = vedicPad shPrakriti
+
+shPrakriti = shClarinet
 
 -- | Desire
 rajas :: PadsynthBandwidth -> Patch2
-rajas = vedicPad shViolin
+rajas = vedicPad shRajas
+
+shRajas = shViolin
 
 -- | the hero
 avatara :: PadsynthBandwidth -> Patch2
-avatara = vedicPad shFrenchHorn
+avatara = vedicPad shAvatara
+
+shAvatara = shFrenchHorn
 
 -- | Earth
 bhumi :: PadsynthBandwidth -> Patch2
-bhumi = vedicPad shViolinsEnsemble
+bhumi = vedicPad shBhumi
 
+shBhumi = shViolinsEnsemble
 
 -- | Eminent
 vibhuHifi :: PadsynthBandwidth -> Patch2
@@ -1878,3 +1901,79 @@ avataraLofi = vedicPadLofi shFrenchHorn
 -- | Earth
 bhumiLofi :: PadsynthBandwidth -> Patch2
 bhumiLofi = vedicPadLofi shViolinsEnsemble
+
+-----------------------------
+-- crossfade pads
+
+vedicCfd :: SharcInstr -> SharcInstr -> PadsynthBandwidth -> Sig -> Patch2
+vedicCfd inst1 instr2 bandwidth cfdLevel = vedicPadCfd cfdLevel inst1 instr2 bandwidth
+
+vibhuRishi :: PadsynthBandwidth -> Sig  -> Patch2
+vibhuRishi = vedicCfd shVibhu shRishi
+
+vibhuAgni :: PadsynthBandwidth -> Sig  -> Patch2
+vibhuAgni = vedicCfd shVibhu shAgni
+
+vibhuPrakriti :: PadsynthBandwidth -> Sig  -> Patch2
+vibhuPrakriti = vedicCfd shVibhu shPrakriti
+
+vibhuRajas :: PadsynthBandwidth -> Sig  -> Patch2
+vibhuRajas = vedicCfd shVibhu shRajas
+
+vibhuAvatara :: PadsynthBandwidth -> Sig  -> Patch2
+vibhuAvatara = vedicCfd shVibhu shAvatara
+
+vibhuBhumi :: PadsynthBandwidth -> Sig -> Patch2
+vibhuBhumi = vedicCfd shVibhu shBhumi
+
+rishiAgni :: PadsynthBandwidth -> Sig -> Patch2
+rishiAgni = vedicCfd shRishi shAgni
+
+rishiPrakriti :: PadsynthBandwidth -> Sig -> Patch2
+rishiPrakriti = vedicCfd shRishi shPrakriti
+
+rishiRajas :: PadsynthBandwidth -> Sig -> Patch2
+rishiRajas = vedicCfd shRishi shRajas
+
+rishiAvatara :: PadsynthBandwidth -> Sig -> Patch2
+rishiAvatara = vedicCfd shRishi shAvatara
+
+rishiBhumi :: PadsynthBandwidth -> Sig -> Patch2
+rishiBhumi = vedicCfd shRishi shRajas
+
+agniPrakriti :: PadsynthBandwidth -> Sig -> Patch2
+agniPrakriti = vedicCfd shAgni shPrakriti
+
+agniRajas :: PadsynthBandwidth -> Sig -> Patch2
+agniRajas = vedicCfd shAgni shRajas
+
+agniAvatara :: PadsynthBandwidth -> Sig -> Patch2
+agniAvatara = vedicCfd shAgni shAvatara
+
+agniBhumi :: PadsynthBandwidth -> Sig -> Patch2
+agniBhumi = vedicCfd shAgni shBhumi
+
+prakritiRajas :: PadsynthBandwidth -> Sig -> Patch2
+prakritiRajas = vedicCfd shPrakriti shRajas
+
+prakritiAvatara :: PadsynthBandwidth -> Sig -> Patch2
+prakritiAvatara = vedicCfd shPrakriti shAvatara
+
+prakritiBhumi :: PadsynthBandwidth -> Sig -> Patch2
+prakritiBhumi = vedicCfd shPrakriti shBhumi
+
+rajasAvatara :: PadsynthBandwidth -> Sig -> Patch2
+rajasAvatara = vedicCfd shRajas shAvatara
+
+rajasBhumi :: PadsynthBandwidth -> Sig -> Patch2
+rajasBhumi = vedicCfd shRajas shBhumi
+
+avataraBhumi :: PadsynthBandwidth -> Sig -> Patch2
+avataraBhumi = vedicCfd shAvatara shBhumi
+
+
+
+
+   
+
+
