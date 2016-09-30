@@ -259,11 +259,9 @@ singleFx = fx1
 singleFx' :: Sig -> (a -> SE a) -> Patch a -> Patch a
 singleFx' = fx1'
 
-{-
 -- | Limits the release section of the note.
-limRel :: SigSpace b => D -> Patch a b -> Patch a b
-limRel rel p = p { patchInstr = fmap (mul (fadeOut rel)) . patchInstr p }
--}
+limRel :: SigSpace a => D -> Patch a -> Patch a
+limRel rel p =  mapPatchInstr (\instr -> fmap (mul (fadeOut rel)) . instr) p
 
 ----------------------------------------------
 -- electric pianos
@@ -306,8 +304,10 @@ epianoHeavy = addHammer 0.15 $ fx1 0.2 smallHall2 $
 epianoBright = addHammer 0.15 $ fx1 0.2 smallHall2 $ 
 	PolySynt $ mul 1.12 . at fromMono . (onCps $ C.epiano epianoReleaseTime [C.EpianoOsc 4 5 1 1, C.EpianoOsc 8 10 3.01 1, C.EpianoOsc 8 15 5 0.5, C.EpianoOsc 8 4 7 0.3])
 
-vibraphonePiano1 = addHammer 0.15 $ smallVibraphone1 { patchInstr = mul (1.5 * fadeOut 0.25) . at (mlp 6500 0.1). patchInstr smallVibraphone1 }
-vibraphonePiano2 = addHammer 0.15 $ smallVibraphone2 { patchInstr = mul (1.5 * fadeOut 0.25) . at (mlp 6500 0.1). patchInstr smallVibraphone2 }
+vibraphonePiano1 = vibraphoneToPiano smallVibraphone1
+vibraphonePiano2 = vibraphoneToPiano smallVibraphone2
+
+vibraphoneToPiano patch = addHammer 0.15 $ mapPatchInstr (\instr -> mul (1.5 * fadeOut 0.25) . at (mlp 6500 0.1) . instr) patch
 
 -- | Adds a hammer strike sound. The first argument is the amount of hammer sound.
 addHammer :: Sig -> Patch2 -> Patch2
@@ -348,7 +348,7 @@ pwOrganm k = mul 0.45 $ waveOrganm (rndPw k)
 waveOrgan :: (Sig -> SE Sig) -> Patch2 
 waveOrgan wave = withSmallHall $ PolySynt $ onCps $ at fromMono . mul (fades 0.01 0.01) . at (mlp 3500 0.1) . wave
 
-waveOrganm :: (Sig -> SE Sig) -> PatchSig2 
+waveOrganm :: (Sig -> SE Sig) -> Patch2 
 waveOrganm wave = withSmallHall $ MonoSynt def $ onSig1 $ at fromMono . mul (fades 0.01 0.01) . at (mlp 3500 0.1) . wave
 
 ----------------------------------------------
@@ -375,7 +375,7 @@ instance Default Choir where
 tenor'   filt (Choir vib) = withSmallHall $ PolySynt $ at fromMono . mul 0.15 . onCps (C.tenorOsc filt vib)
 soprano' filt (Choir vib) = withSmallHall $ PolySynt $ at fromMono . mul 0.15 . onCps (C.sopranoOsc filt vib)
 
-choir' filt vib = SplitPatch $ [(220, tenor'), (10000, soprano)]
+choir' filt vib = SplitPatch $ [(220, tenor' filt vib), (10000, soprano' filt vib)]
 
 choirA = choirA' def
 choirO = choirO' def
@@ -401,9 +401,11 @@ longNoisyChoir = longNoisyChoir' def
 noisyChoir = noisyChoir' def
 
 
-longNoisyChoir' (NoisyChoir n bw) = fx1 0.15 magicCave2 $ PolySynt $ at fromMono . mul 0.45 . onCps (C.noisyChoir n bw)
+dryNoisyChoir (NoisyChoir n bw) = PolySynt $ at fromMono . mul 0.45 . onCps (C.noisyChoir n bw)
+
+longNoisyChoir' ch = fx1 0.15 magicCave2 $ dryNoisyChoir ch
 	
-noisyChoir' ch = (longNoisyChoir' ch) { patchFx  = fx1 0.15 largeHall2 }
+noisyChoir' ch = fx1 0.15 largeHall2 $ dryNoisyChoir ch
 
 -- modes (wth delay or not delay)
 --
@@ -424,8 +426,8 @@ nightPadm = withLargeHall $ MonoSynt def $ mul 0.48 . return . fromMono . onSig1
 overtonePad  = fx1 0.35 smallHall2 $ PolySynt $ mul 0.65 . at fromMono . mixAt 0.25 (mlp 1500 0.1) . onCps (\cps -> mul (fades 0.25 1.2) (C.tibetan 11 0.012 cps) + mul (fades 0.25 1) (C.tibetan 13 0.015 (cps * 0.5)))
 overtonePadm = fx1 0.35 smallHall2 $ MonoSynt def $  mul 0.65 . return . fromMono . mixAt 0.25 (mlp 1500 0.1) . onSig1 (\cps -> mul (fades 0.25 1.2) (C.tibetan 11 0.012 cps) + mul (fades 0.25 1) (C.tibetan 13 0.015 (cps * 0.5)))
 
-caveOvertonePad = overtonePad { patchFx = fx1 0.2 (magicCave2 . mul 0.8) }
-caveOvertonePadm = overtonePadm { patchFx = fx1 0.2 (magicCave2 . mul 0.8) }
+caveOvertonePad =  fx1 0.2 (magicCave2 . mul 0.8) $ dryPatch overtonePad
+caveOvertonePadm = fx1 0.2 (magicCave2 . mul 0.8) $ dryPatch overtonePadm
 
 chorusel  = fx1 0.35 smallHall2 $ PolySynt     $ mul 0.9 . at (mlp (3500 + 2000 * uosc 0.1) 0.1) . onCps (mul (fades 0.65 1) . C.chorusel 13 0.5 10)
 choruselm = fx1 0.35 smallHall2 $ MonoSynt def $ mul 0.9 . return . at (mlp (3500 + 2000 * uosc 0.1) 0.1) . onSig1 (mul (fades 0.65 1) . C.chorusel 13 0.5 10)
@@ -442,7 +444,7 @@ fmDroneMediumm = fx1 0.35 largeHall2 $ MonoSynt def $ return . at fromMono . mul
 fmDroneFast = fx1 0.25 smallHall2 $ PolySynt $ at fromMono . mul 0.5 . onCps (C.fmDrone 3 (0.5, 1))
 fmDroneFastm = fx1 0.25 smallHall2 $ MonoSynt def $ return . at fromMono . mul 0.5 . onSig1 (C.fmDrone 3 (0.5, 1))
 
-vibrophonePad = largeVibraphone1 { patchInstr = mul (1.5 * fades 0.5 0.25) . at (mlp 2500 0.1). patchInstr largeVibraphone1 }
+vibrophonePad = mapPatchInstr (\instr -> mul (1.5 * fades 0.5 0.25) . at (mlp 2500 0.1). instr) largeVibraphone1
 
 data RazorPad = RazorPad { razorPadSpeed :: Sig }
 
@@ -489,11 +491,11 @@ dreamPadBy' :: Sig -> (Sig -> SE Sig) -> Patch2
 dreamPadBy' bright wave = dreamPadFx $ PolySynt $ fmap fromMono . onCps (C.dreamPadBy wave bright)    
 
 -- | The first argument is brightness (0 to 1)
-dreamPadm' :: Sig -> PatchSig2
-dreamPadm' bright = dreamPadFx $ PolySynt $ fmap fromMono . onSig1 (C.dreamPad bright)    
+dreamPadm' :: Sig -> Patch2
+dreamPadm' bright = dreamPadFx $ MonoSynt def $ fmap fromMono . onSig1 (C.dreamPad bright)    
 
 -- | The first argument is brightness (0 to 1). The second argument is a wave function.
-dreamPadBym' :: Sig -> (Sig -> SE Sig) -> PatchSig2
+dreamPadBym' :: Sig -> (Sig -> SE Sig) -> Patch2
 dreamPadBym' bright wave = dreamPadFx $ MonoSynt def $ fmap fromMono . onSig1 (C.dreamPadBy wave bright)
 
 -- | The first argument is brightness (0 to 1)
@@ -501,21 +503,21 @@ underwaterPad' :: Sig -> Patch2
 underwaterPad' bright = dreamPadFx $ PolySynt $ fmap fromMono . onCps (C.underwaterPad bright)    
 
 -- | The first argument is brightness (0 to 1)
-underwaterPadm' :: Sig -> PatchSig2
+underwaterPadm' :: Sig -> Patch2
 underwaterPadm' bright = dreamPadFx $ MonoSynt def $ fmap fromMono . onSig1 (C.underwaterPad bright)    
 
 -- | The first argument is brightness (0 to 1)
 lightIsTooBrightPad' :: Sig -> Patch2
 lightIsTooBrightPad' bright = dreamPadFx $ PolySynt $ fmap fromMono . onCps (C.lightIsTooBrightPad bright)    
 
-lightIsTooBrightPadm' :: Sig -> PatchSig2
+lightIsTooBrightPadm' :: Sig -> Patch2
 lightIsTooBrightPadm' bright = dreamPadFx $ MonoSynt def $ fmap fromMono . onSig1 (C.lightIsTooBrightPad bright)    
 
 -- | The first argument is brightness (0 to 1)
 whaleSongPad' :: Sig -> Patch2
 whaleSongPad' bright = dreamPadFx $ PolySynt $ fmap fromMono . onCps (C.whaleSongPad bright)    
 
-whaleSongPadm' :: Sig -> PatchSig2
+whaleSongPadm' :: Sig -> Patch2
 whaleSongPadm' bright = dreamPadFx $ MonoSynt def $ fmap fromMono . onSig1 (C.whaleSongPad bright)    
 
 ------------------------------------
@@ -674,7 +676,7 @@ magicStrike :: Size -> (Sig -> Sig) -> Patch2
 magicStrike size = mediumStrike' (nextSize $ nextSize size) size
 
 mediumStrike' :: Size -> Size -> (Sig -> Sig) -> Patch2
-mediumStrike' revSize size f = p { patchInstr = mul (toGain size) . patchInstr p }
+mediumStrike' revSize size f = mapPatchInstr (\instr -> mul (toGain size) . instr) p
 	where p = strike' (toStrikeSpec revSize size) f
 
 
@@ -949,13 +951,11 @@ data Wind = Wind
 	, windVib :: D	
 	, windBright :: D }
 
-woodWind' spec instr = Patch 
-	{ patchInstr = \(amp, cps) -> mul 1.3 $ do 
+woodWind' spec instr = withSmallHall $ PolySynt $ \(amp, cps) -> mul 1.3 $ do 
 		seed <- rnd 1
 		vibDisp <- rnd (0.1 * amp)
 		let dispVib vib = vib * (0.9 + vibDisp)		
 		return $ fromMono $ mul (0.8 * sig amp * fadeOut (windDec spec)) $ instr seed (dispVib $ windVib spec) (windAtt spec) (windSus spec) (windDec spec) (0.4 + 0.75 * windBright spec * amp) cps
-	, patchFx    = fx1 0.25 smallHall2 }
 
 -- flute
 
@@ -1243,17 +1243,11 @@ robotVowel vow = fx1 0.15 smallHall2 $ PolySynt $ at fromMono . mul (1.1 * fades
 ------------------------------------
 -- nature / effects
 
-windWall = Patch
-	{ patchInstr = at fromMono . mul (1.25 * fades 0.1 5). onCps C.windWall
-	, patchFx    = fx1 0.25 largeHall2 }
+windWall = withLargeHall $ PolySynt $ at fromMono . mul (1.25 * fades 0.1 5). onCps C.windWall
 
-mildWind = Patch
-	{ patchInstr = at fromMono . mul (1.25 * fades 0.1 1.5). onCps C.mildWind
-	, patchFx    = fx1 0.25 largeHall2 }
+mildWind = withLargeHall $ PolySynt $ at fromMono . mul (1.25 * fades 0.1 1.5). onCps C.mildWind
 
-wind = Patch
-	{ patchInstr = at fromMono . mul (0.8 * fades 0.1 1.5). onCps (\cps -> C.thorWind (cps * 2) 150 (0.3, 1))
-	, patchFx    = fx1 0.25 largeHall2 }
+wind = withLargeHall $ PolySynt $ at fromMono . mul (0.8 * fades 0.1 1.5). onCps (\cps -> C.thorWind (cps * 2) 150 (0.3, 1))
 
 ------------------------------------
 -- drums
@@ -1263,31 +1257,19 @@ wind = Patch
 
 -- | Solo instrument.
 soloSharc :: SharcInstr -> Patch2
-soloSharc instr = Patch 
-    { patchInstr = fmap fromMono . onCps (C.soloSharcOsc instr)
-    , patchFx    = fx1 0.25 smallHall2
-    }
+soloSharc instr = withSmallHall $ PolySynt $ fmap fromMono . onCps (C.soloSharcOsc instr)
 
 -- | Instrumet played in ensemble (with chorus).
 orcSharc :: SharcInstr -> Patch2
-orcSharc instr = Patch 
-    { patchInstr = fmap fromMono . onCps (C.orcSharcOsc instr)
-    , patchFx    = fx1 0.25 largeHall2
-    }
+orcSharc instr = withLargeHall $ PolySynt $ fmap fromMono . onCps (C.orcSharcOsc instr)
 
 -- | Pad orchestra instrument.
 padSharc :: SharcInstr -> Patch2
-padSharc instr = Patch 
-    { patchInstr = fmap fromMono . onCps (C.padSharcOsc instr)
-    , patchFx    = fx1 0.35 largeHall2
-    }
+padSharc instr = withLargeHall $ PolySynt $ fmap fromMono . onCps (C.padSharcOsc instr)
 
 -- | Pad solo instrument.`
 purePadSharc :: SharcInstr -> Patch2
-purePadSharc instr = Patch 
-    { patchInstr = fmap fromMono . onCps (C.purePadSharcOsc instr)
-    , patchFx    = fx1 0.35 largeHall2
-    }
+purePadSharc instr = fx1 0.35 largeHall2 $ PolySynt $ fmap fromMono . onCps (C.purePadSharcOsc instr)
 
 -- | Dream Pad patch made with SHARC oscillators.
 dreamSharc :: SharcInstr -> Patch2
@@ -1296,7 +1278,6 @@ dreamSharc instr = dreamPadBy (\cps -> C.rndSigSharcOsc instr (ir cps) cps)
 -- | Dream Pad patch made with SHARC oscillators.
 dreamSharc' :: SharcInstr -> Sig -> Patch2
 dreamSharc' instr brightness = dreamPadBy' brightness (\cps -> C.rndSigSharcOsc instr (ir cps) cps) 
-
 
 type PadsynthBandwidth = Double
 
@@ -1312,10 +1293,8 @@ psOrganSharcHifi = psOrganSharc' hiDef
 
 -- | Padsynth instrument with organ-like amplitude envelope. We can specify aux parameters.
 psOrganSharc' :: PadSharcSpec -> SharcInstr -> Patch2
-psOrganSharc' spec sh = Patch 
-	{ patchInstr = mul (0.5 * fades 0.01 0.1) . onCps (C.padsynthSharcOsc2' spec sh)
-	, patchFx    = [FxSpec 0.25 (return . smallHall2), FxSpec 1 (return . (at $ mul 1.4 . saturator 0.75))]
-	}
+psOrganSharc' spec sh = fxs $ PolySynt $ mul (0.5 * fades 0.01 0.1) . onCps (C.padsynthSharcOsc2' spec sh)
+    where fxs = FxChain [FxSpec 0.25 (return . smallHall2), FxSpec 1 (return . (at $ mul 1.4 . saturator 0.75))]
 
 -- | Padsynth instrument with organ-like amplitude envelope and huge reverb.
 psLargeOrganSharc :: SharcInstr -> Patch2
@@ -1327,10 +1306,8 @@ psLargeOrganSharcHifi = psLargeOrganSharc' hiDef
 
 -- | Padsynth instrument with organ-like amplitude envelope and huge reverb.
 psLargeOrganSharc' :: PadSharcSpec -> SharcInstr -> Patch2
-psLargeOrganSharc' spec sh = Patch 
-	{ patchInstr = mul (0.65 * fades 0.01 0.1) . onCps (C.padsynthSharcOsc2' spec sh)
-	, patchFx    = [FxSpec 0.35 (return . largeHall2), FxSpec 1 (return . (at $ mul 1.4 . saturator 0.75))]
-	}
+psLargeOrganSharc' spec sh = fxs $ PolySynt $ mul (0.65 * fades 0.01 0.1) . onCps (C.padsynthSharcOsc2' spec sh)
+    where fxs = FxChain [FxSpec 0.35 (return . largeHall2), FxSpec 1 (return . (at $ mul 1.4 . saturator 0.75))]
 
 -- | Padsynth instrument with piano-like amplitude envelope.
 psPianoSharc :: ReleaseTime -> SharcInstr -> Patch2
@@ -1342,11 +1319,8 @@ psPianoSharcHifi = psPianoSharc' hiDef
  
 -- | Padsynth instrument with piano-like amplitude envelope. We can specify aux parameters.
 psPianoSharc' :: PadSharcSpec -> ReleaseTime -> SharcInstr -> Patch2
-psPianoSharc' spec releaseTime sh = Patch 
-    { patchInstr = \ampCps -> mul (0.75 * C.pianoEnv releaseTime ampCps) $ onCps (C.padsynthSharcOsc2' spec sh) ampCps
-    , patchFx    = [FxSpec 0.15 (return . smallHall2), FxSpec 1 (return . (at $ mul 1.4 . saturator 0.75))]
-    }
-
+psPianoSharc' spec releaseTime sh = fxs $ PolySynt $ \ampCps -> mul (0.75 * C.pianoEnv releaseTime ampCps) $ onCps (C.padsynthSharcOsc2' spec sh) ampCps
+    where fxs = FxChain [FxSpec 0.15 (return . smallHall2), FxSpec 1 (return . (at $ mul 1.4 . saturator 0.75))]
 
 -- | Padsynth instrument with piano-like amplitude envelope.
 xpsPianoSharc :: ReleaseTime -> SharcInstr -> Patch2
@@ -1358,11 +1332,8 @@ xpsPianoSharcHifi = xpsPianoSharc' hiDef
 
 -- | Padsynth instrument with piano-like amplitude envelope. We can specify aux parameters.
 xpsPianoSharc' :: PadSharcSpec -> ReleaseTime -> SharcInstr -> Patch2
-xpsPianoSharc' spec releaseTime sh = addHammer 0.12 $ Patch 
-    { patchInstr = \ampCps -> mul (0.75 * C.xpianoEnv releaseTime ampCps) $ onCps (C.padsynthSharcOsc2' spec sh) ampCps
-    , patchFx    = [FxSpec 0.15 (return . smallHall2), FxSpec 1 (return . (at $ mul 1.4 . saturator 0.75))]
-    }
-
+xpsPianoSharc' spec releaseTime sh = addHammer 0.12 $ fxs $ PolySynt $ \ampCps -> mul (0.75 * C.xpianoEnv releaseTime ampCps) $ onCps (C.padsynthSharcOsc2' spec sh) ampCps
+    where fxs = FxChain [FxSpec 0.15 (return . smallHall2), FxSpec 1 (return . (at $ mul 1.4 . saturator 0.75))]
 
 -- | Padsynth instrument with piano-like amplitude envelope.
 psLargePianoSharc :: ReleaseTime -> SharcInstr -> Patch2
@@ -1374,10 +1345,8 @@ psLargePianoSharcHifi = psLargePianoSharc' hiDef
 
 -- | Padsynth instrument with piano-like amplitude envelope. We can specify aux parameters.
 psLargePianoSharc' :: PadSharcSpec -> ReleaseTime -> SharcInstr -> Patch2
-psLargePianoSharc' spec releaseTime sh = Patch 
-    { patchInstr = \ampCps -> mul (0.75 * C.pianoEnv releaseTime ampCps) $ onCps (C.padsynthSharcOsc2' spec sh) ampCps
-    , patchFx    = [FxSpec 0.15 (return . largeHall2), FxSpec 1 (return . (at $ mul 1.4 . saturator 0.75))]
-    }
+psLargePianoSharc' spec releaseTime sh = fxs $ PolySynt $ \ampCps -> mul (0.75 * C.pianoEnv releaseTime ampCps) $ onCps (C.padsynthSharcOsc2' spec sh) ampCps
+    where fxs = FxChain [FxSpec 0.15 (return . largeHall2), FxSpec 1 (return . (at $ mul 1.4 . saturator 0.75))]
 
 -- | Padsynth instrument with piano-like amplitude envelope.
 xpsLargePianoSharc :: ReleaseTime -> SharcInstr -> Patch2
@@ -1389,10 +1358,8 @@ xpsLargePianoSharcHifi = xpsLargePianoSharc' hiDef
 
 -- | Padsynth instrument with piano-like amplitude envelope. We can specify aux parameters.
 xpsLargePianoSharc' :: PadSharcSpec -> ReleaseTime -> SharcInstr -> Patch2
-xpsLargePianoSharc' spec releaseTime sh = Patch 
-    { patchInstr = \ampCps -> mul (0.75 * C.xpianoEnv releaseTime ampCps) $ onCps (C.padsynthSharcOsc2' spec sh) ampCps
-    , patchFx    = [FxSpec 0.15 (return . largeHall2), FxSpec 1 (return . (at $ mul 1.4 . saturator 0.75))]
-    }
+xpsLargePianoSharc' spec releaseTime sh = fxs $ PolySynt $ \ampCps -> mul (0.75 * C.xpianoEnv releaseTime ampCps) $ onCps (C.padsynthSharcOsc2' spec sh) ampCps
+    where fxs = FxChain [FxSpec 0.15 (return . largeHall2), FxSpec 1 (return . (at $ mul 1.4 . saturator 0.75))]
 
 psPadFilterBy :: Sig -> Sig -> (Sig -> Sig -> Sig -> Sig) -> (D, D) -> Sig -> Sig
 psPadFilterBy rippleLevel q resonFilter ampCps = resonFilter (0.3 * (sig $ snd ampCps) + 2500 + 2000 * fades 0.15 (0.6 + rel ampCps) + rippleLevel * slope 0.75 0.5 * osc 8) q
@@ -1414,11 +1381,10 @@ psDeepOscCfd koeff (spec1, sh1) (spec2, sh2) = deepOsc (psOscCfd koeff (spec1, s
 psDeepOscCfd4 koeffX koeffY (spec1, sh1) (spec2, sh2) (spec3, sh3) (spec4, sh4) = deepOsc (psOscCfd4 koeffX koeffY (spec1, sh1) (spec2, sh2) (spec3, sh3) (spec4, sh4))
 
 genPsPad :: (Sig2 -> Sig2) -> ((D, D) -> Sig -> Sig) -> (D -> SE Sig2) -> Patch2
-genPsPad effect filter wave =  Patch 
-	{ patchInstr = \ampCps -> mul (1.2 * fades 0.5 (0.6 + rel ampCps)) $ onCps (at (filter ampCps) . wave) ampCps
-	, patchFx    =  [FxSpec 0.25 (return . effect), FxSpec 0.5 (return . (at $ mul 2.1 . saturator 0.75)), FxSpec 0.3 (at $ echo 0.125 0.65)]
-	}
-	where rel (amp, cps) = amp - cps / 3500
+genPsPad effect filter wave = fxs $ PolySynt $ \ampCps -> mul (1.2 * fades 0.5 (0.6 + rel ampCps)) $ onCps (at (filter ampCps) . wave) ampCps
+	where 
+        fxs = FxChain [FxSpec 0.25 (return . effect), FxSpec 0.5 (return . (at $ mul 2.1 . saturator 0.75)), FxSpec 0.3 (at $ echo 0.125 0.65)]
+        rel (amp, cps) = amp - cps / 3500
 
 -- | Padsynth instrument with pad-like amplitude envelope.
 psPadSharc :: SharcInstr -> Patch2
@@ -1813,7 +1779,7 @@ noisySpiral = noisySpiral' 8
 noisySpiral' :: D -> Patch2
 noisySpiral' spiralSpeed = fxs $ PolySynt $ onCps $ \cps -> mul 0.24 $ wave cps
 	where
-		fxs = [FxSpec 0.15 (return . magicCave2), FxSpec 0.43 (at $ echo 0.35 0.85)]	
+		fxs = FxChain [FxSpec 0.15 (return . magicCave2), FxSpec 0.43 (at $ echo 0.35 0.85)]	
 
 		wave x  = noisy x + pad x
 		noisy x = at (mul 0.3 . fromMono . bat (bp (x * 5) 23) . lp (300 + 2500 * linseg [0, 0.73, 0, 8, 3] * uosc (expseg [0.25, 5, spiralSpeed])) 14) white
@@ -1822,7 +1788,6 @@ noisySpiral' spiralSpeed = fxs $ PolySynt $ onCps $ \cps -> mul 0.24 $ wave cps
 		filter cps asig = at (bhp 30) $ bat (lp (200 + (cps + 3000)) 45) $ asig
 
 		spec = noisySpec
-
 
 noisyHarms = [ 1,  1, 0.7600046992, 0.6199994683, 0.9399998784, 0.4400023818, 0.0600003302, 0.8499968648, 0.0899999291, 0.8199964762, 0.3199984133, 0.9400014281, 0.3000001907, 0.120003365, 0.1799997687, 0.5200006366]
 noisySpec  = defPadsynthSpec 82.2 noisyHarms
