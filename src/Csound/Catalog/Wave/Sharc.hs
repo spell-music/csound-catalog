@@ -7,6 +7,9 @@ module Csound.Catalog.Wave.Sharc(
     PadSharcSpec(..), padsynthSharcOsc, padsynthSharcOsc2,
     padsynthSharcOsc', padsynthSharcOsc2',
 
+    -- * Padsynth and granular
+    morphsynthSharcOsc, morphsynthSharcOsc', quadMorphsynthSharcOsc, quadMorphsynthSharcOsc',
+
     -- * Instriments
     SharcInstr(..),
     shViolin, shViolinPizzicato, shViolinMuted, shViolinMarteleBowing, shViolinsEnsemble, shViola, shViolaPizzicato, shViolaMuted,
@@ -122,6 +125,18 @@ padsynthSharcOsc2' spec instr freq = padsynthOscMultiCps2 (getSpecIntervals spec
 
 padsynthSharcOsc' :: PadSharcSpec -> SharcInstr -> D -> SE Sig
 padsynthSharcOsc' spec instr freq = padsynthOscMultiCps (getSpecIntervals spec instr) freq
+
+morphsynthSharcOsc :: MorphSpec -> SharcInstr -> D -> SE Sig2
+morphsynthSharcOsc = morphsynthSharcOsc' def
+
+morphsynthSharcOsc' :: PadSharcSpec -> MorphSpec -> SharcInstr -> D -> SE Sig2
+morphsynthSharcOsc' spec morphSpec instr freq = morphsynthOscMultiCps morphSpec (getSpecIntervals spec instr) freq
+
+quadMorphsynthSharcOsc :: MorphSpec -> [SharcInstr] -> (Sig, Sig) -> D -> SE Sig2
+quadMorphsynthSharcOsc = quadMorphsynthSharcOsc' def
+
+quadMorphsynthSharcOsc' :: PadSharcSpec -> MorphSpec -> [SharcInstr] -> (Sig, Sig) -> D -> SE Sig2
+quadMorphsynthSharcOsc' spec morphSpec instr (x, y) freq = quadMorphsynthOscMultiCps morphSpec (fmap (getSpecIntervals spec) instr) (x, y) freq
 
 getSpecIntervals spec (SharcInstr instr) = zip borderFreqs specs
     where 
