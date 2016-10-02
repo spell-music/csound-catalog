@@ -375,7 +375,7 @@ instance Default Choir where
 tenor'   filt (Choir vib) = withSmallHall $ PolySynt $ at fromMono . mul 0.15 . onCps (C.tenorOsc filt vib)
 soprano' filt (Choir vib) = withSmallHall $ PolySynt $ at fromMono . mul 0.15 . onCps (C.sopranoOsc filt vib)
 
-choir' filt vib = SplitPatch $ [(220, tenor' filt vib), (10000, soprano' filt vib)]
+choir' filt vib = withSmallHall $ SplitPatch (dryPatch $ tenor' filt vib) 220 (dryPatch $ soprano' filt vib)
 
 choirA = choirA' def
 choirO = choirO' def
