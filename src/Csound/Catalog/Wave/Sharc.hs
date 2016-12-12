@@ -93,7 +93,7 @@ soloSharcOsc instr cps = mul (fades 0.001 0.05) $ rndSharcOsc instr cps
 
 -- | Plays a orchestrated instrument (with pitch chorus)
 orcSharcOsc :: SharcInstr -> D -> SE Sig
-orcSharcOsc instr cps = mul (fades 0.01 0.42) $ uni (rndSharcOsc instr . ir) (sig cps)
+orcSharcOsc instr cps = mul (fades 0.01 0.42) $ uni (rndSigSharcOsc instr cps) (sig cps)
 
 -- | Plays a solo instrument with pad-like envelope
 purePadSharcOsc :: SharcInstr -> D -> SE Sig
@@ -101,7 +101,7 @@ purePadSharcOsc instr cps = mul (fades 0.65 0.75) $ rndSharcOsc instr cps
 
 -- | Plays orchestrated instrument with pad-like envelope
 padSharcOsc :: SharcInstr -> D -> SE Sig
-padSharcOsc instr cps = mul (fades 0.65 0.75) $ uni (rndSharcOsc instr . ir) (sig cps)
+padSharcOsc instr cps = mul (fades 0.65 0.75) $ uni (rndSigSharcOsc instr cps) (sig cps)
 
 ---------------------------------------------------------------------------
 -- padsynth

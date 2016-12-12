@@ -490,6 +490,12 @@ dreamPad' bright = dreamPadFx $ polySynt $ fmap fromMono . onCps (C.dreamPad bri
 dreamPadBy' :: Sig -> (Sig -> SE Sig) -> Patch2
 dreamPadBy' bright wave = dreamPadFx $ polySynt $ fmap fromMono . onCps (C.dreamPadBy wave bright)    
 
+dreamPadWithKey :: (D -> Sig -> SE Sig) -> Patch2
+dreamPadWithKey = dreamPadWithKey' 0.35
+
+dreamPadWithKey' :: Sig -> (D -> Sig -> SE Sig) -> Patch2
+dreamPadWithKey' bright wave = dreamPadFx $ polySynt $ fmap fromMono . onCps (\cps ->  (C.dreamPadBy (wave cps) bright) (sig cps))
+
 -- | The first argument is brightness (0 to 1)
 dreamPadm' :: Sig -> Patch2
 dreamPadm' bright = dreamPadFx $ MonoSynt def $ fmap fromMono . onSig1 (C.dreamPad bright)    
@@ -1273,11 +1279,11 @@ purePadSharc instr = fx1 0.35 largeHall2 $ polySynt $ fmap fromMono . onCps (C.p
 
 -- | Dream Pad patch made with SHARC oscillators.
 dreamSharc :: SharcInstr -> Patch2
-dreamSharc instr = dreamPadBy (\cps -> C.rndSigSharcOsc instr (ir cps) cps)
+dreamSharc instr = dreamPadWithKey (C.rndSigSharcOsc instr)
 
 -- | Dream Pad patch made with SHARC oscillators.
 dreamSharc' :: SharcInstr -> Sig -> Patch2
-dreamSharc' instr brightness = dreamPadBy' brightness (\cps -> C.rndSigSharcOsc instr (ir cps) cps) 
+dreamSharc' instr brightness = dreamPadWithKey' brightness (C.rndSigSharcOsc instr)
 
 type PadsynthBandwidth = Double
 
