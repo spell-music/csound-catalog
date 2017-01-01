@@ -1,5 +1,6 @@
 -- | Timbres
 module Csound.Catalog.Wave(
+    SubSyntSpec(..), SubSynt, SubSyntKey, SubSynt2, SubSyntKey2,
     
     -- * Woodwind instruments
     flute, bassClarinet, frenchHorn, sheng, hulusi, dizi,
@@ -92,7 +93,7 @@ module Csound.Catalog.Wave(
     -- * Pads
     polySynthFx, polySynth,
     dreamPad, underwaterPad, lightIsTooBrightPad, whaleSongPad,
-    dreamPadBy,
+    dreamPadBy, lightIsTooBrightPadBy, whaleSongPadBy,
 
     -- * SHARC instruments
     -- | SHARC ported to Csound. SHARC is a database of musical timbre information by Gregory Sandell.

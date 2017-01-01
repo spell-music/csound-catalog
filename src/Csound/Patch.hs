@@ -9,6 +9,8 @@
 --
 -- The function @atMidi@ invokes a @Patch@ with midi.
 module Csound.Patch(
+	SubSyntSpec(..), SubSynt, SubSyntKey, SubSynt2, SubSyntKey2,
+
 	-- * Electric piano
 	Epiano1(..), epiano1, epiano1', 
 	MutedPiano(..), mutedPiano, mutedPiano',
@@ -40,7 +42,8 @@ module Csound.Patch(
 	chorusel, pwEnsemble, fmDroneSlow, fmDroneMedium, fmDroneFast, vibrophonePad,
 	RazorPad(..), razorPadSlow, razorPadFast, razorPadTremolo, razorPad, razorPad',
 	dreamPad, underwaterPad, lightIsTooBrightPad, whaleSongPad, dreamPadBy,
-	dreamPad', underwaterPad', lightIsTooBrightPad', whaleSongPad', dreamPad', dreamPadBy',
+	dreamPad', underwaterPad', lightIsTooBrightPad', whaleSongPad', dreamPad', dreamPadBy', 
+	dreamPadSpec, lightIsTooBrightPadSpec, whaleSongPadSpec,
 
 	-- ** Pad Monosynth
 	pwPadm, triPadm, nightPadm, overtonePadm, caveOvertonePadm, choruselm,
@@ -140,8 +143,11 @@ module Csound.Patch(
 	dizi, shortDizi, diziVibrato, mutedDizi, brightDizi,
 
 	-- * SHARC instruments
-	SharcInstr,
-	soloSharc, orcSharc, padSharc, purePadSharc, dreamSharc, dreamSharc',
+	SharcInstr, SubSyntSharc,
+	soloSharc, orcSharc, padSharc, purePadSharc, 
+	dreamSharc, dreamSharc', dreamSharcSpec,
+	lightIsTooBrightSharc, lightIsTooBrightSharc', lightIsTooBrightSharcSpec,
+	whaleSongSharc, whaleSongSharc', whaleSongSharcSpec,
 
 	-- ** Padsynth instruments
 	PadSharcSpec(..),
@@ -226,7 +232,8 @@ import qualified Csound.Catalog.Wave as C
 import qualified Csound.Catalog.Reson as C
 
 import Csound.Catalog.Wave(maleA, maleE, maleIY, maleO, maleOO, maleU, maleER, maleUH,
-    femaleA, femaleE, femaleIY, femaleO, femaleOO)
+    femaleA, femaleE, femaleIY, femaleO, femaleOO,
+    SubSyntSpec(..), SubSynt, SubSyntKey, SubSynt2, SubSyntKey2)
 
 import Csound.Catalog.Wave(Accordeon(..),
 	ReleaseTime,
@@ -466,14 +473,18 @@ razorPadm = razorPadm' def
 razorPad'  (RazorPad speed) = fx1 0.35 largeHall2 $ polySynt $ at fromMono . mul 0.6 . onCps (uncurry $ C.razorPad speed)
 razorPadm' (RazorPad speed) = fx1 0.35 largeHall2 $ MonoSynt def $ at fromMono . mul 0.6 . (uncurry $ C.razorPad speed)
 
-dreamPadFx = FxChain [FxSpec 0.35 (return . largeHall2), FxSpec 0.25 (at $ echo 0.25 0.65), FxSpec 0.25 (at $ chorus 0.07 1.25 1)]
+dreamPadFx = FxChain [FxSpec 0.35 (return . largeHall2), FxSpec 0.25 (return . (at $ echo 0.25 0.65)), FxSpec 0.25 (at $ chorus 0.07 1.25 1)]
 
 dreamPad = dreamPad' 0.35
 underwaterPad = underwaterPad' 0.35
 lightIsTooBrightPad = lightIsTooBrightPad' 0.55
 whaleSongPad = whaleSongPad' 0.35
 
-dreamPadBy = dreamPadBy' 0.35
+dreamPadSpec = SubSyntSpec rndSaw mlp 0.35
+lightIsTooBrightPadSpec = SubSyntSpec rndSaw mlp 0.55
+whaleSongPadSpec = SubSyntSpec rndTri mlp 0.35
+
+dreamPadBy wave = dreamPadBy' (dreamPadSpec { subOsc = wave })
 
 dreamPadm = dreamPadm' 0.35
 underwaterPadm = underwaterPadm' 0.35
@@ -487,14 +498,18 @@ dreamPad' :: Sig -> Patch2
 dreamPad' bright = dreamPadFx $ polySynt $ fmap fromMono . onCps (C.dreamPad bright)    
 
 -- | The first argument is brightness. The second argument is a wave shape function.
-dreamPadBy' :: Sig -> (Sig -> SE Sig) -> Patch2
-dreamPadBy' bright wave = dreamPadFx $ polySynt $ fmap fromMono . onCps (C.dreamPadBy wave bright)    
+dreamPadBy' :: SubSynt -> Patch2
+dreamPadBy' spec = dreamPadFx $ polySynt $ fmap fromMono . onCps (C.dreamPadBy spec)    
 
 dreamPadWithKey :: (D -> Sig -> SE Sig) -> Patch2
-dreamPadWithKey = dreamPadWithKey' 0.35
+dreamPadWithKey wave = dreamPadWithKey' (SubSyntSpec wave mlp 0.35)
 
-dreamPadWithKey' :: Sig -> (D -> Sig -> SE Sig) -> Patch2
-dreamPadWithKey' bright wave = dreamPadFx $ polySynt $ fmap fromMono . onCps (\cps ->  (C.dreamPadBy (wave cps) bright) (sig cps))
+dreamPadWithKey' :: SubSyntKey -> Patch2
+dreamPadWithKey' spec = dreamPadFx $ polySynt $ fmap fromMono . onCps (\cps -> C.dreamPadBy (SubSyntSpec (wave cps) filter bright) (sig cps))
+	where
+		bright = subBright spec
+		wave   = subOsc spec
+		filter = subFilter spec
 
 -- | The first argument is brightness (0 to 1)
 dreamPadm' :: Sig -> Patch2
@@ -502,7 +517,7 @@ dreamPadm' bright = dreamPadFx $ MonoSynt def $ fmap fromMono . onSig1 (C.dreamP
 
 -- | The first argument is brightness (0 to 1). The second argument is a wave function.
 dreamPadBym' :: Sig -> (Sig -> SE Sig) -> Patch2
-dreamPadBym' bright wave = dreamPadFx $ MonoSynt def $ fmap fromMono . onSig1 (C.dreamPadBy wave bright)
+dreamPadBym' bright wave = dreamPadFx $ MonoSynt def $ fmap fromMono . onSig1 (C.dreamPadBy (SubSyntSpec wave mlp bright))
 
 -- | The first argument is brightness (0 to 1)
 underwaterPad' :: Sig -> Patch2
@@ -519,6 +534,16 @@ lightIsTooBrightPad' bright = dreamPadFx $ polySynt $ fmap fromMono . onCps (C.l
 lightIsTooBrightPadm' :: Sig -> Patch2
 lightIsTooBrightPadm' bright = dreamPadFx $ MonoSynt def $ fmap fromMono . onSig1 (C.lightIsTooBrightPad bright)    
 
+lightIsTooBrightPadWithKey :: (D -> Sig -> SE Sig) -> Patch2
+lightIsTooBrightPadWithKey wave = lightIsTooBrightPadWithKey' (SubSyntSpec wave mlp 0.35)
+
+lightIsTooBrightPadWithKey' :: SubSyntKey -> Patch2
+lightIsTooBrightPadWithKey' spec = dreamPadFx $ polySynt $ fmap fromMono . onCps (\cps -> C.lightIsTooBrightPadBy (SubSyntSpec (wave cps) filter bright) (sig cps))
+	where
+		bright = subBright spec
+		wave   = subOsc spec
+		filter = subFilter spec
+
 -- | The first argument is brightness (0 to 1)
 whaleSongPad' :: Sig -> Patch2
 whaleSongPad' bright = dreamPadFx $ polySynt $ fmap fromMono . onCps (C.whaleSongPad bright)    
@@ -526,14 +551,24 @@ whaleSongPad' bright = dreamPadFx $ polySynt $ fmap fromMono . onCps (C.whaleSon
 whaleSongPadm' :: Sig -> Patch2
 whaleSongPadm' bright = dreamPadFx $ MonoSynt def $ fmap fromMono . onSig1 (C.whaleSongPad bright)    
 
+whaleSongPadWithKey :: (D -> Sig -> SE Sig) -> Patch2
+whaleSongPadWithKey wave = whaleSongPadWithKey' (SubSyntSpec wave mlp 0.35)
+
+whaleSongPadWithKey' :: SubSyntKey -> Patch2
+whaleSongPadWithKey' spec = dreamPadFx $ polySynt $ fmap fromMono . onCps (\cps -> C.whaleSongPadBy (SubSyntSpec (wave cps) filter bright) (sig cps))
+	where
+		bright = subBright spec
+		wave   = subOsc spec
+		filter = subFilter spec
+
 ------------------------------------
 -- leads
 
 polySynth = fxs $ polySynt $ fmap fromMono . onCps C.polySynth 	
-	where fxs = FxChain [FxSpec 0.25 (return . largeHall2), FxSpec 0.25 (at $ echo 0.25 0.65), FxSpec 0.25 (at $ chorus 0.07 1.25 1)]
+	where fxs = FxChain [FxSpec 0.25 (return . largeHall2), FxSpec 0.25 (return . (at $ echo 0.25 0.65)), FxSpec 0.25 (at $ chorus 0.07 1.25 1)]
 
 polySynthm = fxs $ MonoSynt def $ fmap fromMono . onSig1 C.polySynth 	
-	where fxs = FxChain [FxSpec 0.25 (return . largeHall2), FxSpec 0.25 (at $ echo 0.25 0.65), FxSpec 0.25 (at $ chorus 0.07 1.25 1)]
+	where fxs = FxChain [FxSpec 0.25 (return . largeHall2), FxSpec 0.25 (return . (at $ echo 0.25 0.65)), FxSpec 0.25 (at $ chorus 0.07 1.25 1)]
 
 phasingLead = withSmallHall $ polySynt $ at fromMono . mul (0.7 * fadeOut 0.05) . onCps (uncurry C.phasingSynth)
 
@@ -553,7 +588,7 @@ razorLead = razorLead' def
 razorLead' (RazorLead bright speed) = fx1 0.35 smallHall2 $ polySynt $ at fromMono . (\(amp, cps) -> mul (fadeOut (0.05 + amp * 0.3)) $ C.razorLead (bright * sig amp) (speed * sig amp) (sig amp) (sig cps))
 
 overtoneLeadFx :: Sig2 -> SE Sig2
-overtoneLeadFx x = fmap magicCave2 $ mixAt 0.2 (echo 0.25 0.45) x
+overtoneLeadFx x = return $ magicCave2 $ mixAt 0.2 (echo 0.25 0.45) x
 
 overtoneLead :: Patch2
 overtoneLead = fx1' 0.15 overtoneLeadFx $ polySynt $ mul 0.4 . at fromMono . onCps (mul (fades 0.01 1) . C.tibetan 13 0.012)
@@ -1277,13 +1312,40 @@ padSharc instr = withLargeHall $ polySynt $ fmap fromMono . onCps (C.padSharcOsc
 purePadSharc :: SharcInstr -> Patch2
 purePadSharc instr = fx1 0.35 largeHall2 $ polySynt $ fmap fromMono . onCps (C.purePadSharcOsc instr)
 
+type SubSyntSharc = SubSyntSpec SharcInstr
+
+dreamSharcSpec :: SharcInstr -> SubSyntSharc
+dreamSharcSpec instr = SubSyntSpec instr (subFilter dreamPadSpec) (subBright dreamPadSpec)
+
 -- | Dream Pad patch made with SHARC oscillators.
 dreamSharc :: SharcInstr -> Patch2
 dreamSharc instr = dreamPadWithKey (C.rndSigSharcOsc instr)
 
 -- | Dream Pad patch made with SHARC oscillators.
-dreamSharc' :: SharcInstr -> Sig -> Patch2
-dreamSharc' instr brightness = dreamPadWithKey' brightness (C.rndSigSharcOsc instr)
+dreamSharc' :: SubSyntSharc -> Patch2
+dreamSharc' spec = dreamPadWithKey' (SubSyntSpec (C.rndSigSharcOsc $ subOsc spec) (subFilter spec) (subBright spec))
+
+lightIsTooBrightSharcSpec :: SharcInstr -> SubSyntSharc
+lightIsTooBrightSharcSpec instr = SubSyntSpec instr (subFilter lightIsTooBrightPadSpec) (subBright lightIsTooBrightPadSpec)
+
+-- | Dream Pad patch made with SHARC oscillators.
+lightIsTooBrightSharc :: SharcInstr -> Patch2
+lightIsTooBrightSharc instr = lightIsTooBrightPadWithKey (C.rndSigSharcOsc instr)
+
+-- | Dream Pad patch made with SHARC oscillators.
+lightIsTooBrightSharc' :: SubSyntSharc -> Patch2
+lightIsTooBrightSharc' spec = lightIsTooBrightPadWithKey' (SubSyntSpec (C.rndSigSharcOsc $ subOsc spec) (subFilter spec) (subBright spec))
+
+whaleSongSharcSpec :: SharcInstr -> SubSyntSharc
+whaleSongSharcSpec instr = SubSyntSpec instr (subFilter whaleSongPadSpec) (subBright whaleSongPadSpec)
+
+-- | Dream Pad patch made with SHARC oscillators.
+whaleSongSharc :: SharcInstr -> Patch2
+whaleSongSharc instr = whaleSongPadWithKey (C.rndSigSharcOsc instr)
+
+-- | Dream Pad patch made with SHARC oscillators.
+whaleSongSharc' :: SubSyntSharc -> Patch2
+whaleSongSharc' spec = whaleSongPadWithKey' (SubSyntSpec (C.rndSigSharcOsc $ subOsc spec) (subFilter spec) (subBright spec))
 
 type PadsynthBandwidth = Double
 
@@ -1389,7 +1451,7 @@ psDeepOscCfd4 koeffX koeffY (spec1, sh1) (spec2, sh2) (spec3, sh3) (spec4, sh4) 
 genPsPad :: (Sig2 -> Sig2) -> ((D, D) -> Sig -> Sig) -> (D -> SE Sig2) -> Patch2
 genPsPad effect filter wave = fxs $ polySynt $ \ampCps -> mul (1.2 * fades 0.5 (0.6 + rel ampCps)) $ onCps (at (filter ampCps) . wave) ampCps
 	where 
-        fxs = FxChain [FxSpec 0.25 (return . effect), FxSpec 0.5 (return . (at $ mul 2.1 . saturator 0.75)), FxSpec 0.3 (at $ echo 0.125 0.65)]
+        fxs = FxChain [FxSpec 0.25 (return . effect), FxSpec 0.5 (return . (at $ mul 2.1 . saturator 0.75)), FxSpec 0.3 (return . (at $ echo 0.125 0.65))]
         rel (amp, cps) = amp - cps / 3500
 
 -- | Padsynth instrument with pad-like amplitude envelope.
@@ -1766,7 +1828,7 @@ avataraBhumi = vedicCfd shAvatara shBhumi
 noisyRise :: Patch2
 noisyRise = fxs $ polySynt $ onCps $ \cps -> mul 0.24 $ wave cps
 	where
-		fxs = FxChain [FxSpec 0.35 (return . largeHall2), FxSpec 0.5 (at $ echo 0.25 0.85)]		
+		fxs = FxChain [FxSpec 0.35 (return . largeHall2), FxSpec 0.5 (return . (at $ echo 0.25 0.85))]		
 		wave x  = noisy x + pad x
 		noisy x = at (mul 0.3 . fromMono . bat (bp (x * 5) 23) . lp (300 + 2500 * linseg [0, 0.73, 0, 8, 3]) 14) white
 		pad x = envelope $ filter x $ padsynthOsc2 spec x + mul 0.15 (padsynthOsc2 spec (x * 5)) + mul 0.5 (padsynthOsc2 spec (x / 2))
@@ -1785,7 +1847,7 @@ noisySpiral = noisySpiral' 8
 noisySpiral' :: D -> Patch2
 noisySpiral' spiralSpeed = fxs $ polySynt $ onCps $ \cps -> mul 0.24 $ wave cps
 	where
-		fxs = FxChain [FxSpec 0.15 (return . magicCave2), FxSpec 0.43 (at $ echo 0.35 0.85)]	
+		fxs = FxChain [FxSpec 0.15 (return . magicCave2), FxSpec 0.43 (return . (at $ echo 0.35 0.85))]	
 
 		wave x  = noisy x + pad x
 		noisy x = at (mul 0.3 . fromMono . bat (bp (x * 5) 23) . lp (300 + 2500 * linseg [0, 0.73, 0, 8, 3] * uosc (expseg [0.25, 5, spiralSpeed])) 14) white
