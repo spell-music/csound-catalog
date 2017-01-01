@@ -22,7 +22,7 @@ module Csound.Patch(
 	-- * Organ
 	cathedralOrgan, toneWheelOrgan, 
 	HammondOrgan(..), hammondOrgan, hammondOrgan',
-	sawOrgan, triOrgan, sqrOrgan, pwOrgan, waveOrgan,
+	sawOrgan, triOrgan, sqrOrgan, pwOrgan, waveOrgan, waveOrgan', waveOrganSpec,
 
 	hammondOrganm, hammondOrganm', sawOrganm, triOrganm, sqrOrganm, pwOrganm, waveOrganm,
 
@@ -67,7 +67,7 @@ module Csound.Patch(
 	-- * Plucked
 	guitar, harpsichord,	
 
-	-- * Strike
+	-- * Strikeh
 
 	smallDahina, dahina, largeDahina, magicDahina,
 	smallBanyan,banyan, largeBanyan, magicBanyan,
@@ -148,6 +148,7 @@ module Csound.Patch(
 	dreamSharc, dreamSharc', dreamSharcSpec,
 	lightIsTooBrightSharc, lightIsTooBrightSharc', lightIsTooBrightSharcSpec,
 	whaleSongSharc, whaleSongSharc', whaleSongSharcSpec,
+	sharcOrgan, sharcOrgan', sharcOrganSpec,
 
 	-- ** Padsynth instruments
 	PadSharcSpec(..),
@@ -353,10 +354,21 @@ sqrOrganm  = mul 0.45 $ waveOrganm rndSqr
 pwOrganm k = mul 0.45 $ waveOrganm (rndPw k)
 
 waveOrgan :: (Sig -> SE Sig) -> Patch2 
-waveOrgan wave = withSmallHall $ polySynt $ onCps $ at fromMono . mul (fades 0.01 0.01) . at (mlp 3500 0.1) . wave
+waveOrgan wave = withSmallHall $ singleFx 1 (at $ mlp 3500 0.1) $ polySynt $ onCps $ at fromMono . mul (fades 0.01 0.01) . wave
 
 waveOrganm :: (Sig -> SE Sig) -> Patch2 
-waveOrganm wave = withSmallHall $ MonoSynt def $ onSig1 $ at fromMono . mul (fades 0.01 0.01) . at (mlp 3500 0.1) . wave
+waveOrganm wave = withSmallHall $ singleFx 1 (at $ mlp 3500 0.1) $ MonoSynt def $ onSig1 $ at fromMono . mul (fades 0.01 0.01) . wave
+
+waveOrganSpec wave = SubSyntSpec wave mlp 0.5
+
+waveOrgan' :: SubSynt -> Patch2 
+waveOrgan' spec = withSmallHall $ singleFx 1 (at (subFilter spec (3500 * 2 * subBright spec) 0.1)) $ polySynt $ onCps $ at fromMono . mul (fades 0.01 0.01) . (subOsc spec)
+
+waveOrganWithKey :: (D -> Sig -> SE Sig) -> Patch2 
+waveOrganWithKey wave = withSmallHall $ singleFx 1 (at (mlp 3500 0.1)) $ polySynt $ onCps $ \cps -> (at fromMono . mul (fades 0.01 0.01) . wave cps) (sig cps)
+
+waveOrganWithKey' :: SubSyntKey -> Patch2 
+waveOrganWithKey' spec = withSmallHall $ singleFx 1 (at (subFilter spec (3500 * 2 * subBright spec) 0.1)) $ polySynt $ onCps $ \cps -> (at fromMono . mul (fades 0.01 0.01) . (subOsc spec cps)) (sig cps)
 
 ----------------------------------------------
 -- accordeons
@@ -1346,6 +1358,15 @@ whaleSongSharc instr = whaleSongPadWithKey (C.rndSigSharcOsc instr)
 -- | Dream Pad patch made with SHARC oscillators.
 whaleSongSharc' :: SubSyntSharc -> Patch2
 whaleSongSharc' spec = whaleSongPadWithKey' (SubSyntSpec (C.rndSigSharcOsc $ subOsc spec) (subFilter spec) (subBright spec))
+
+sharcOrganSpec :: SharcInstr -> SubSyntSharc
+sharcOrganSpec instr = SubSyntSpec instr mlp 0.5
+
+sharcOrgan :: SharcInstr -> Patch2
+sharcOrgan instr = waveOrganWithKey (C.rndSigSharcOsc instr)
+
+sharcOrgan' :: SubSyntSharc -> Patch2
+sharcOrgan' spec = waveOrganWithKey' (SubSyntSpec (C.rndSigSharcOsc $ subOsc spec) (subFilter spec) (subBright spec))
 
 type PadsynthBandwidth = Double
 
