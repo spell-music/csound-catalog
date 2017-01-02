@@ -1,6 +1,5 @@
 -- | Timbres
-module Csound.Catalog.Wave(
-    SubSyntSpec(..), SubSynt, SubSyntKey, SubSynt2, SubSyntKey2,
+module Csound.Catalog.Wave(  
     
     -- * Woodwind instruments
     flute, bassClarinet, frenchHorn, sheng, hulusi, dizi,
@@ -72,14 +71,15 @@ module Csound.Catalog.Wave(
     -- * Thor
     cathedralOrgan, cathedralOrganFx, hammondOrgan,
 
-    amPiano, 
+    amPiano, amPianoBy,
 
     pwBass, pwHarpsichord, pwEnsemble,
+    pwBassBy, pwHarpsichordBy, pwEnsembleBy,
 
     simpleBass, 
 
     ReleaseTime,
-    EpianoOsc(..), epiano, pianoEnv, xpianoEnv,
+    EpianoOsc(..), epiano, epianoBy, pianoEnv, xpianoEnv,
 
     noisyChoir, thorWind, mildWind, boom, windWall, 
 
@@ -87,7 +87,7 @@ module Csound.Catalog.Wave(
 
     -- * Bitwig
 
-    pwPad, triPad, triPadFx, 
+    pwPad, triPad, triPadFx, triPadBy, pwPadBy,
     Accordeon(..), accordeon, accordeonFx,
 
     -- * Pads

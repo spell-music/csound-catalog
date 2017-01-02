@@ -1,5 +1,5 @@
 module Csound.Catalog.Wave.Bitwig(
-	pwPad, triPad, triPadFx, 
+	pwPad, triPad, triPadFx, triPadBy, pwPadBy,
 	Accordeon(..), accordeon, accordeonFx
 ) where
 
@@ -11,12 +11,18 @@ import Csound.Base
 triPadFx :: Sig2 -> SE Sig2
 triPadFx a = mixAt 0.5 smallHall2 $ at (chorus 0.2 0.3 0.25) (return a :: SE Sig2)
 
-triPad x = mul (1.5 * fades 0.3 0.5) $ at (mlp (x * 5) 0.15) $ do
+triPad = triPadBy mlp
+
+triPadBy :: ResonFilter -> Sig -> SE Sig
+triPadBy filter x = mul (1.5 * fades 0.3 0.5) $ at (filter (x * 5) 0.15) $ do
 	lfo <- rand 1.2
 	mul 0.5 $ rndTri (x + 1.5 * lfo) + rndTri (x * cent 8)
 
 pwPad :: Sig -> SE Sig
-pwPad x = mul (fades 0.3 0.95) $ at (mlp (x * 5) 0.15) $ do
+pwPad = pwPadBy mlp
+
+pwPadBy :: ResonFilter -> Sig -> SE Sig
+pwPadBy filter x = mul (fades 0.3 0.95) $ at (filter (x * 5) 0.15) $ do
 	let lfo = uosc 4
 	return $ mul 0.5 $ pw (0.2 + 0.4 * lfo) x + tri (x * cent 8)
 

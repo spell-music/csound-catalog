@@ -1,7 +1,6 @@
-module Csound.Catalog.Wave.Misc (
-    SubSyntSpec(..), SubSynt, SubSyntKey, SubSynt2, SubSyntKey2,
+module Csound.Catalog.Wave.Misc (    
     okComputer, polySynthFx, polySynth,
-    dreamPad, underwaterPad, lightIsTooBrightPad, whaleSongPad,
+    dreamPad, underwaterPad, lightIsTooBrightPad, whaleSongPad,    
     dreamPadBy, lightIsTooBrightPadBy, whaleSongPadBy,
     deepBass,
 
@@ -9,19 +8,6 @@ module Csound.Catalog.Wave.Misc (
 ) where
 
 import Csound.Base 
-
--- | Subtractive syntesizer specs.
--- 
--- Arguments are: main oscillator, resonant filter, brightness amount.
-data SubSyntSpec a = SubSyntSpec
-    { subOsc    :: a
-    , subFilter :: Sig -> Sig -> Sig -> Sig
-    , subBright :: Sig } 
-
-type SubSynt        = SubSyntSpec (Sig -> SE Sig)
-type SubSyntKey     = SubSyntSpec (D -> Sig -> SE Sig)
-type SubSynt2       = SubSyntSpec (Sig -> SE Sig2)
-type SubSyntKey2    = SubSyntSpec (D -> Sig -> SE Sig2)
 
 -- | Tech sound. Random sinusoids palyed at the very fast rate. 
 --
@@ -34,47 +20,43 @@ okComputer cps = fmap go $ noise 11000 0.99
         go anoise = osc (samphold anoise kgate)
         kgate = kr $ oscil 1 cps (elins [1, 0, 0])
 
-
-polySynth x = mul (fades 0.01 0.15) $ at (mlp 5500 0.12) $ at (filt 2 br 18000 0.3) $ uni rndSaw x + uni rndSaw (x * cent 14) + (mul 0.2 $ at (lp 400 0.1) white)
+polySynth x = mul (fades 0.01 0.15) $ uni rndSaw x + uni rndSaw (x * cent 14) + (mul 0.2 $ at (lp 400 0.1) white)
    where uni = multiHz 2 (cent 50)
 
-polySynthFx :: SE Sig -> SE Sig2
-polySynthFx = mixAt 0.25 largeHall2 . mixAt 0.25 (echo 0.25 0.65) . at (chorus 0.07 1.25 0.25) . at fromMono
+polySynthFx :: ResonFilter -> SE Sig -> SE Sig2
+polySynthFx filter = mixAt 0.25 largeHall2 . mixAt 0.25 (echo 0.25 0.65) . at (chorus 0.07 1.25 0.25) . at (fromMono . filter 5500 0.12 . filt 2 br 18000 0.3)
 
 uni = multiHz 2 (cent 50)
 
-dreamPad brightness = dreamPadBy (SubSyntSpec rndSaw mlp brightness)
-underwaterPad brightness = dreamPadBy (SubSyntSpec rndTri mlp brightness)
-whaleSongPad brightness = whaleSongPadBy (SubSyntSpec rndTri mlp brightness)
-lightIsTooBrightPad brightness = lightIsTooBrightPadBy (SubSyntSpec rndSaw mlp brightness)
+lightIsTooBrightPad :: ResonFilter -> Sig -> Sig -> SE Sig
+lightIsTooBrightPad filter = lightIsTooBrightPadBy filter rndSaw
 
-lightIsTooBrightPadBy :: SubSynt -> Sig -> SE Sig
-lightIsTooBrightPadBy spec = genDreamPadInstr spec mkOsc
-    where 
-        mkOsc vibLfo1 vibLfo2 x = uni wave (vibLfo1 x) + uni wave (vibLfo2 $ x * cent 14) + mul 0.3 (mul (uosc 0.25) (rndTri (vibLfo2 $ x * 7 * cent 4)) + mul (isawSeq [1, 0.5, 0.25] 6 * uosc 0.17) (rndTri (vibLfo2 $ x * 13)) + mul (sqrSeq [1, 0.5, 0.25, 0.1] 8 * uosc 0.28) (rndOsc (vibLfo2 $ x * 9 * cent 3)))
-        wave = subOsc spec
+lightIsTooBrightPadBy :: ResonFilter -> Wave -> Sig -> Sig -> SE Sig
+lightIsTooBrightPadBy filter wave brightness = genDreamPadInstr filter mkOsc brightness
+    where mkOsc vibLfo1 vibLfo2 x = uni wave (vibLfo1 x) + uni wave (vibLfo2 $ x * cent 14) + mul 0.3 (mul (uosc 0.25) (rndTri (vibLfo2 $ x * 7 * cent 4)) + mul (isawSeq [1, 0.5, 0.25] 6 * uosc 0.17) (rndTri (vibLfo2 $ x * 13)) + mul (sqrSeq [1, 0.5, 0.25, 0.1] 8 * uosc 0.28) (rndOsc (vibLfo2 $ x * 9 * cent 3)))
 
-whaleSongPadBy :: SubSynt -> Sig -> SE Sig
-whaleSongPadBy spec = genDreamPadInstr spec mkOsc
-    where 
-        mkOsc vibLfo1 vibLfo2 x = uni wave (vibLfo1 x) + uni wave (vibLfo2 $ x * cent 14) + uni wave (vibLfo2 $ 3 * x * cent 14) + mul 0.15 (uni wave (vibLfo2 $ 7 * x * cent 14)) + mul 0.15 (uni wave ((vibLfo2 $ 11 * x * cent 14) + 400 * uosc 0.2))
-        wave = subOsc spec
+whaleSongPad :: ResonFilter -> Sig -> Sig -> SE Sig
+whaleSongPad filter = whaleSongPadBy filter rndTri
 
-dreamPadBy :: SubSynt -> Sig -> SE Sig
-dreamPadBy spec = genDreamPadInstr spec mkOsc
-    where 
-        mkOsc vibLfo1 vibLfo2 x = uni wave (vibLfo1 x) + uni wave (vibLfo2 $ x * cent 14) 
-        wave = subOsc spec
+whaleSongPadBy :: ResonFilter -> Wave -> Sig -> Sig -> SE Sig
+whaleSongPadBy filter wave brightness = genDreamPadInstr filter mkOsc brightness
+    where mkOsc vibLfo1 vibLfo2 x = uni wave (vibLfo1 x) + uni wave (vibLfo2 $ x * cent 14) + uni wave (vibLfo2 $ 3 * x * cent 14) + mul 0.15 (uni wave (vibLfo2 $ 7 * x * cent 14)) + mul 0.15 (uni wave ((vibLfo2 $ 11 * x * cent 14) + 400 * uosc 0.2))
+      
+underwaterPad :: ResonFilter -> Sig -> Sig -> SE Sig
+underwaterPad filter = dreamPadBy filter rndTri
 
+dreamPad :: ResonFilter -> Sig -> Sig -> SE Sig
+dreamPad filter = dreamPadBy filter rndSaw
 
-genDreamPadInstr subSynt mkOsc x = do
+dreamPadBy :: ResonFilter -> Wave -> Sig -> Sig -> SE Sig
+dreamPadBy filter wave brightness = genDreamPadInstr filter mkOsc brightness
+    where mkOsc vibLfo1 vibLfo2 x = uni wave (vibLfo1 x) + uni wave (vibLfo2 $ x * cent 14) 
+        
+genDreamPadInstr filter mkOsc brightness x = do
     a1 <- oscs
     a2 <- nois
     return $ mul (fades 0.85 0.95) $ fx1 (a2 + a1) + fx2 a1   
-    where
-        brightness = subBright subSynt        
-        filter = subFilter subSynt
-
+    where     
         fx1 = filt 2 filter (filtLfo1 (700 + brightness * 2500)) 0.26
         fx2 = filter (filtLfo2 (1200 + brightness * 2500)) 0.32
 
