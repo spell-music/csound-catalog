@@ -61,6 +61,7 @@ module Csound.Patch(
 
 	-- * Bass
 	simpleBass, pwBass, deepBass, withDeepBass,
+	fmBass1,
 
 	-- * Plucked
 	guitar, harpsichord,	
@@ -243,6 +244,17 @@ import Csound.Catalog.Wave(Accordeon(..),
 
 import Data.Char
 
+monoArgToNote :: MonoArg -> (Sig, Sig)
+monoArgToNote arg = (monoAmp arg * monoGate arg, monoCps arg)
+
+monoSig1 :: SigSpace a => (Sig -> a) -> (MonoArg -> a)
+monoSig1 f arg = mul env $ f cps
+	where 
+		env = amp * monoAdsr arg 0.35 0.5 1 0.5
+		amp = port (monoAmp arg) 0.01
+		cps = portk (monoCps arg) (delay1 gate * 0.01)
+		gate = monoGate arg
+
 onSig1 :: SigSpace a => (Sig -> a) -> Sig2 -> a
 onSig1 f (amp, cps) = mul amp $ f cps
 
@@ -337,7 +349,7 @@ hammondOrganm = hammondOrganm' def
 
 hammondOrgan' (HammondOrgan detune) = fx1 0.15 smallRoom2 $ polySynt $ mul 0.4 . at fromMono . onCps (C.hammondOrgan detune)
 
-hammondOrganm' (HammondOrgan detune) = fx1 0.15 smallRoom2 $ monoSynt $ mul 0.4 . at fromMono . onSig1 (C.hammondOrgan detune)
+hammondOrganm' (HammondOrgan detune) = fx1 0.15 smallRoom2 $ monoSynt $ mul 0.4 . at fromMono . monoSig1 (C.hammondOrgan detune)
 
 toneWheelOrgan = withSmallHall $ polySynt $ at fromMono  . mul (0.6 * fadeOut 0.05) . onCps C.toneWheel	
 
@@ -358,7 +370,7 @@ waveOrgan :: (Sig -> SE Sig) -> Patch2
 waveOrgan wave = organFx $ polySynt $ onCps $ at fromMono . mul (fades 0.01 0.01) . wave
 
 waveOrganm :: (Sig -> SE Sig) -> Patch2 
-waveOrganm wave = organFx $ monoSynt $ onSig1 $ at fromMono . mul (fades 0.01 0.01) . wave
+waveOrganm wave = organFx $ monoSynt $ monoSig1 $ at fromMono . mul (fades 0.01 0.01) . wave
 
 waveOrganWithKey :: (D -> Sig -> SE Sig) -> Patch2 
 waveOrganWithKey wave = organFx $ polySynt $ onCps $ \cps -> (at fromMono . mul (fades 0.01 0.01) . wave cps) (sig cps)
@@ -427,37 +439,37 @@ noisyChoir' ch = fx1 0.15 largeHall2 $ dryNoisyChoir ch
 -- pads
 
 pwPad  = withSmallHall $ polySyntFilter $ \filter -> mul 0.6 . at fromMono . onCps (C.pwPadBy filter)
-pwPadm = withSmallHall $ monoSyntFilter $ \filter -> mul 0.6 . at fromMono . onSig1 (C.pwPadBy filter)
+pwPadm = withSmallHall $ monoSyntFilter $ \filter -> mul 0.6 . at fromMono . monoSig1 (C.pwPadBy filter)
 
 triPad  = fx1' 0.25 C.triPadFx $ polySyntFilter $ \filter -> fmap fromMono . mul 0.7 . onCps (C.triPadBy filter)
-triPadm = fx1' 0.25 C.triPadFx $ monoSyntFilter $ \filter -> fmap fromMono . mul 0.7 . onSig1 (C.triPadBy filter)
+triPadm = fx1' 0.25 C.triPadFx $ monoSyntFilter $ \filter -> fmap fromMono . mul 0.7 . monoSig1 (C.triPadBy filter)
 
 nightPad  = withLargeHall $ polySynt $ mul 0.48 . at fromMono . onCps (mul (fadeOut 1) . C.nightPad 0.5)
-nightPadm = withLargeHall $ monoSynt $ mul 0.48 . return . fromMono . onSig1 ((fadeOut 1 * ) . C.nightPad 0.5)
+nightPadm = withLargeHall $ monoSynt $ mul 0.48 . return . fromMono . monoSig1 ((fadeOut 1 * ) . C.nightPad 0.5)
 
 overtoneFx     p = fx1 0.35 smallHall2 $ singleFxFilter 0.25 (\filter -> at (filter 1500 0.1)) p
 caveOvertoneFx p = fx1 0.2  magicCave2 $ singleFxFilter 0.25 (\filter -> at (filter 1500 0.1)) $ mul 0.8 p
 
 overtonePad  = overtoneFx $ polySynt $ mul 0.65 . at fromMono . onCps (\cps -> mul (fades 0.25 1.2) (C.tibetan 11 0.012 cps) + mul (fades 0.25 1) (C.tibetan 13 0.015 (cps * 0.5)))
-overtonePadm = overtoneFx $ monoSynt $  mul 0.65 . return . fromMono . onSig1 (\cps -> mul (fades 0.25 1.2) (C.tibetan 11 0.012 cps) + mul (fades 0.25 1) (C.tibetan 13 0.015 (cps * 0.5)))
+overtonePadm = overtoneFx $ monoSynt $  mul 0.65 . return . fromMono . monoSig1 (\cps -> mul (fades 0.25 1.2) (C.tibetan 11 0.012 cps) + mul (fades 0.25 1) (C.tibetan 13 0.015 (cps * 0.5)))
 
 caveOvertonePad =  caveOvertoneFx $ dryPatch overtonePad
 caveOvertonePadm = caveOvertoneFx $ dryPatch overtonePadm
 
 chorusel  = fx1 0.35 smallHall2 $ polySyntFilter $ \filter note -> (mul 0.9 . at (filter (3500 + 2000 * uosc 0.1) 0.1) . onCps (mul (fades 0.65 1) . C.chorusel 13 0.5 10)) note
-choruselm = fx1 0.35 smallHall2 $ monoSyntFilter $ \filter note -> (mul 0.9 . return . at (filter (3500 + 2000 * uosc 0.1) 0.1) . onSig1 (mul (fades 0.65 1) . C.chorusel 13 0.5 10)) note
+choruselm = fx1 0.35 smallHall2 $ monoSyntFilter $ \filter note -> (mul 0.9 . return . at (filter (3500 + 2000 * uosc 0.1) 0.1) . monoSig1 (mul (fades 0.65 1) . C.chorusel 13 0.5 10)) note
 
 pwEnsemble = withSmallHall $ polySyntFilter $ \filter -> at fromMono . mul 0.55 . onCps (C.pwEnsembleBy filter)
-pwEnsemblem = withSmallHall $ monoSyntFilter $ \filter -> at fromMono . mul 0.55 . onSig1 (C.pwEnsembleBy filter)
+pwEnsemblem = withSmallHall $ monoSyntFilter $ \filter -> at fromMono . mul 0.55 . monoSig1 (C.pwEnsembleBy filter)
 
 fmDroneSlow = fx1 0.35 largeHall2 $ polySynt $ at fromMono . mul 0.5 . onCps (C.fmDrone 3 (10, 5))
-fmDroneSlowm = fx1 0.35 largeHall2 $ monoSynt $ return . at fromMono . mul 0.5 . onSig1 (C.fmDrone 3 (10, 5))
+fmDroneSlowm = fx1 0.35 largeHall2 $ monoSynt $ return . at fromMono . mul 0.5 . monoSig1 (C.fmDrone 3 (10, 5))
 
 fmDroneMedium = fx1 0.35 largeHall2 $ polySynt $ at fromMono . mul 0.5 . onCps (C.fmDrone 3 (5, 3))
-fmDroneMediumm = fx1 0.35 largeHall2 $ monoSynt $ return . at fromMono . mul 0.5 . onSig1 (C.fmDrone 3 (5, 3))
+fmDroneMediumm = fx1 0.35 largeHall2 $ monoSynt $ return . at fromMono . mul 0.5 . monoSig1 (C.fmDrone 3 (5, 3))
 
 fmDroneFast = fx1 0.25 smallHall2 $ polySynt $ at fromMono . mul 0.5 . onCps (C.fmDrone 3 (0.5, 1))
-fmDroneFastm = fx1 0.25 smallHall2 $ monoSynt $ return . at fromMono . mul 0.5 . onSig1 (C.fmDrone 3 (0.5, 1))
+fmDroneFastm = fx1 0.25 smallHall2 $ monoSynt $ return . at fromMono . mul 0.5 . monoSig1 (C.fmDrone 3 (0.5, 1))
 
 vibrophonePad = addPreFx 1 (return . (at $ mlp 2500 0.1)) $ mapPatchInstr (\instr -> mul (1.5 * fades 0.5 0.25) . instr) largeVibraphone1
 
@@ -479,7 +491,7 @@ razorPad = razorPad' def
 razorPadm = razorPadm' def
 
 razorPad'  (RazorPad speed) = fx1 0.35 largeHall2 $ polySyntFilter $ \filter -> at fromMono . mul 0.6 . onCps (uncurry $ C.razorPad filter speed)
-razorPadm' (RazorPad speed) = fx1 0.35 largeHall2 $ monoSyntFilter $ \filter -> at fromMono . mul 0.6 . (uncurry $ C.razorPad filter speed)
+razorPadm' (RazorPad speed) = fx1 0.35 largeHall2 $ monoSyntFilter $ \filter arg -> (at fromMono . mul 0.6 . (uncurry $ C.razorPad filter speed)) (monoArgToNote arg)
 
 dreamPadFx = FxChain [fxSpec 0.35 (return . largeHall2), fxSpec 0.25 (return . (at $ echo 0.25 0.65)), fxSpec 0.25 (at $ chorus 0.07 1.25 1)]
 
@@ -514,11 +526,11 @@ dreamPadWithKey brightness wave = dreamPadFx $ polySyntFilter $ genDreamPadNote 
 
 -- | The first argument is brightness (0 to 1)
 dreamPadm' :: Sig -> Patch2
-dreamPadm' bright = dreamPadFx $ monoSyntFilter $ \filter -> fmap fromMono . onSig1 (C.dreamPad filter bright)    
+dreamPadm' bright = dreamPadFx $ monoSyntFilter $ \filter -> fmap fromMono . monoSig1 (C.dreamPad filter bright)    
 
 -- | The first argument is brightness (0 to 1). The second argument is a wave function.
 dreamPadBym' :: Sig -> (Sig -> SE Sig) -> Patch2
-dreamPadBym' bright wave = dreamPadFx $ monoSyntFilter $ \filter -> fmap fromMono . onSig1 (C.dreamPadBy filter wave bright)
+dreamPadBym' bright wave = dreamPadFx $ monoSyntFilter $ \filter -> fmap fromMono . monoSig1 (C.dreamPadBy filter wave bright)
 
 -- | The first argument is brightness (0 to 1)
 underwaterPad' :: Sig -> Patch2
@@ -526,14 +538,14 @@ underwaterPad' bright = dreamPadFx $ polySyntFilter $ \filter ->  fmap fromMono 
 
 -- | The first argument is brightness (0 to 1)
 underwaterPadm' :: Sig -> Patch2
-underwaterPadm' bright = dreamPadFx $ monoSyntFilter $ \filter -> fmap fromMono . onSig1 (C.underwaterPad filter bright)    
+underwaterPadm' bright = dreamPadFx $ monoSyntFilter $ \filter -> fmap fromMono . monoSig1 (C.underwaterPad filter bright)    
 
 -- | The first argument is brightness (0 to 1)
 lightIsTooBrightPad' :: Sig -> Patch2
 lightIsTooBrightPad' bright = dreamPadFx $ polySyntFilter $ \filter ->  fmap fromMono . onCps (C.lightIsTooBrightPad filter bright)    
 
 lightIsTooBrightPadm' :: Sig -> Patch2
-lightIsTooBrightPadm' bright = dreamPadFx $ monoSyntFilter $ \filter -> fmap fromMono . onSig1 (C.lightIsTooBrightPad filter bright)    
+lightIsTooBrightPadm' bright = dreamPadFx $ monoSyntFilter $ \filter -> fmap fromMono . monoSig1 (C.lightIsTooBrightPad filter bright)    
 
 lightIsTooBrightPadWithKey :: Sig -> (D -> Sig -> SE Sig) -> Patch2
 lightIsTooBrightPadWithKey brightness wave = dreamPadFx $ polySyntFilter $ genDreamPadNote C.lightIsTooBrightPadBy wave brightness
@@ -543,7 +555,7 @@ whaleSongPad' :: Sig -> Patch2
 whaleSongPad' bright = dreamPadFx $ polySyntFilter $ \filter -> fmap fromMono . onCps (C.whaleSongPad filter bright)    
 
 whaleSongPadm' :: Sig -> Patch2
-whaleSongPadm' bright = dreamPadFx $ monoSyntFilter $ \filter -> fmap fromMono . onSig1 (C.whaleSongPad filter bright)    
+whaleSongPadm' bright = dreamPadFx $ monoSyntFilter $ \filter -> fmap fromMono . monoSig1 (C.whaleSongPad filter bright)    
 
 whaleSongPadWithKey :: Sig -> (D -> Sig -> SE Sig) -> Patch2
 whaleSongPadWithKey brightness wave = dreamPadFx $ polySyntFilter $ genDreamPadNote C.whaleSongPadBy wave brightness
@@ -554,7 +566,7 @@ whaleSongPadWithKey brightness wave = dreamPadFx $ polySyntFilter $ genDreamPadN
 polySynthFxChain = FxChain [fxSpec 0.25 (return . largeHall2), fxSpec 0.25 (return . (at $ echo 0.25 0.65)), fxSpec 0.25 (at $ chorus 0.07 1.25 1), fxSpecFilter 1 $ \filter -> return . at (filter 5500 0.12 . filt 2 br 18000 0.3)]
 
 polySynth  = polySynthFxChain $ polySynt $ fmap fromMono . onCps C.polySynth 	
-polySynthm = polySynthFxChain $ monoSynt $ fmap fromMono . onSig1 C.polySynth 	
+polySynthm = polySynthFxChain $ monoSynt $ fmap fromMono . monoSig1 C.polySynth 	
 	
 phasingLead = withSmallHall $ polySynt $ at fromMono . mul (0.7 * fadeOut 0.05) . onCps (uncurry C.phasingSynth)
 
@@ -587,6 +599,8 @@ simpleBass = withSmallRoom $ polySynt $ at fromMono . mul 0.32 . onCps C.simpleB
 pwBass = withSmallHall $ polySyntFilter $ \filter -> at fromMono . mul 0.4 . onCps (C.pwBassBy filter)
 
 deepBass = withSmallHall $ polySynt $ at fromMono . mul 0.4 . onCps C.deepBass
+
+fmBass1 = adsrMono (\env (amp, cps) -> return $ fromMono $ C.fmBass1 env (amp, cps))
 
 -- | The first argument is the amount of deepBass to mix into the original patch.
 withDeepBass :: Sig -> Patch2 -> Patch2
@@ -829,11 +843,11 @@ scrapeFast k m = fx1 0.15 largeHall2 $ polySynt $ \x@(amp, cps) -> (mul (0.75 * 
 
 scrape k m = fx1 0.15 largeHall2 $ polySynt $ \x@(amp, cps) -> (mul (0.75 * sig amp * k * fades 0.5 (scrapeRelease x 0.97)) . at fromMono . C.scrapeModes m) (sig cps)
 
-scrapem k m = fx1 0.15 largeHall2 $ monoSynt $ \(amp, cps) -> (mul (0.75 * amp * k * fades 0.5 1.97) . at fromMono . C.scrapeModes m) cps
+scrapem k m = fx1 0.15 largeHall2 $ monoSynt $ (\(amp, cps) -> (mul (0.75 * amp * k * fades 0.5 1.97) . at fromMono . C.scrapeModes m) cps) . monoArgToNote
 
 scrapePad k m = fx1 0.15 largeHall2 $ polySynt $ \x@(amp, cps) -> (mul (0.75 * sig amp * k * fades 0.5 (scrapeRelease x 2.27	)) . at fromMono . C.scrapeModes m) (sig cps)
 
-scrapePadm k m = fx1 0.15 largeHall2 $ monoSynt $ \(amp, cps) -> (mul (0.75 * amp * k * fades 0.5 2.27) . at fromMono . C.scrapeModes m) cps
+scrapePadm k m = fx1 0.15 largeHall2 $ monoSynt $ (\(amp, cps) -> (mul (0.75 * amp * k * fades 0.5 2.27) . at fromMono . C.scrapeModes m) cps) . monoArgToNote
 
 scaleScrapeDahina = 1.32
 scaleScrapeBanyan = 0.95

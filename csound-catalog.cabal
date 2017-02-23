@@ -45,6 +45,7 @@ Library
         Csound.Catalog.Wave.WoodwindAlg     
         Csound.Catalog.Wave.Vowel
         Csound.Catalog.Wave.Ac
+        Csound.Catalog.Wave.Fm
         Csound.Catalog.Wave.VestigeOfTime        
         Csound.Catalog.Wave.Deserted
         Csound.Catalog.Wave.TheHeartbeat

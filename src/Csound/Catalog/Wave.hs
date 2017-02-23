@@ -85,6 +85,9 @@ module Csound.Catalog.Wave(
 
     razorPad, razorLead,
 
+    -- * FM
+    fmBass1,
+
     -- * Bitwig
 
     pwPad, triPad, triPadFx, triPadBy, pwPadBy,
@@ -139,6 +142,7 @@ import Csound.Catalog.Wave.Sean
 import Csound.Catalog.Wave.Flavio
 import Csound.Catalog.Wave.Thor
 import Csound.Catalog.Wave.Bitwig
+import Csound.Catalog.Wave.Fm
 
 import Csound.Catalog.Wave.Misc
 
