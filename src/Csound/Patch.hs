@@ -61,7 +61,7 @@ module Csound.Patch(
 
 	-- * Bass
 	simpleBass, pwBass, deepBass, withDeepBass,
-	fmBass1,
+	fmBass1, fmBass2,
 
 	-- * Plucked
 	guitar, harpsichord,	
@@ -601,6 +601,9 @@ pwBass = withSmallHall $ polySyntFilter $ \filter -> at fromMono . mul 0.4 . onC
 deepBass = withSmallHall $ polySynt $ at fromMono . mul 0.4 . onCps C.deepBass
 
 fmBass1 = adsrMono (\env (amp, cps) -> return $ fromMono $ C.fmBass1 env (amp, cps))
+
+fmBass2 = fxs $ adsrMono (\env (amp, cps) -> return $ fromMono $ C.fmBass2 env (amp, cps))
+	where fxs = FxChain [fxSpec 1 (at (chorus 0.2 0.15 0.17)), fxSpec 1 (return . at (bhp 35 . blp 1200))]
 
 -- | The first argument is the amount of deepBass to mix into the original patch.
 withDeepBass :: Sig -> Patch2 -> Patch2

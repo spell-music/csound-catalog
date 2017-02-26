@@ -86,7 +86,7 @@ module Csound.Catalog.Wave(
     razorPad, razorLead,
 
     -- * FM
-    fmBass1,
+    fmBass1, fmBass2,
 
     -- * Bitwig
 
