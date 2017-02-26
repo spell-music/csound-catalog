@@ -57,7 +57,7 @@ module Csound.Patch(
 	overtoneLead,
 
 	-- ** Lead Monosynth
-	polySynthm,
+	polySynthm, dafunkLead,
 
 	-- * Bass
 	simpleBass, pwBass, deepBass, withDeepBass,
@@ -1847,3 +1847,15 @@ noisySpec  = defPadsynthSpec 82.2 noisyHarms
 -- dac $ mul 0.24 $ at (bhp 30) $ mixAt 0.15 magicCave2 $ mixAt 0.43 (echo 0.35 0.85) $ midi $ onMsg $ (\cps -> (bat (lp (200 + (cps + 3000)) 45) . mul (fades 0.5 0.7) . (\x -> (at (mul 0.3 . fromMono . bat (bp (x * 11) 23) . lp (300 + 2500 * linseg [0, 0.73, 0, 8, 3] * uosc (expseg [0.25, 5, 8])) 14) white) +  padsynthOsc2 spec x + mul 0.15 (padsynthOsc2 spec (x * 5)) + mul 0.5 (padsynthOsc2 spec (x / 2)))) cps)
 
 -- dac $ mul 0.24 $ at (bhp 30) $ mixAt 0.35 largeHall2 $ mixAt 0.5 (echo 0.25 0.85) $ midi $ onMsg $ (\cps -> (bat (lp (200 + (cps + 3000)) 45) . mul (fades 0.5 0.7) . (\x -> (at (mul 0.3 . fromMono . bat (bp (x * 5) 23) . lp (300 + 2500 * linseg [0, 0.73, 0, 8, 3]) 14) white) +  padsynthOsc2 spec x + mul 0.15 (padsynthOsc2 spec (x * 5)) + mul 0.5 (padsynthOsc2 spec (x / 2)))) cps)
+
+
+----------------------------------
+
+dafunkWave cfq adsrFun (amp, cps) = at (bhp 30) $ diode (0.95 + 0.2 * cfq) (550 + 4500 * cfq) (0.52 + 0.4 * cfq) $ amp * env * (\x -> saw x + 0.5 * saw (x * 0.503) + 0.25 * (sqr (x * 0.253))) (port cps 0.001)
+    where         
+        env = adsrFun 0.019 8.5 0.2 0.07
+
+dafunkLead = adsrMono (\env (amp, cps) -> return $ fromMono $ dafunkWave cfq env (amp, cps))
+    where cfq = uoscBy (sines [1, 0, 0, 0, 0.05]) 0.5
+
+
