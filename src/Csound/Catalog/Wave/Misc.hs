@@ -4,7 +4,9 @@ module Csound.Catalog.Wave.Misc (
     dreamPadBy, lightIsTooBrightPadBy, whaleSongPadBy,
     deepBass,
 
-    impulseMarimba1, impulseMarimba2
+    impulseMarimba1, impulseMarimba2,
+
+    celloWave
 ) where
 
 import Csound.Base 
@@ -87,3 +89,23 @@ impulseMarimba1 cps = mul 4 $ at (mlp cps 0.95) $ impulse 0
 
 impulseMarimba2 :: Sig -> Sig
 impulseMarimba2 cps = bat (bp  cps  120) $ impulse 0
+
+
+celloWave :: (D, Sig) -> SE Sig
+celloWave = go p t x y z
+    where
+        go p t x y z = (\(amp, cps) -> ($ cps) ((mul $ sig amp) . at (
+                mlp (800) 0.45 . 
+                hp 50 10 . 
+                bat (\x -> sum [
+                    bp (300 + 200 * (p - 0.5)) 60 x, 
+                    bp (700 + 300 * (t - 0.5)) 40 x, 
+                    bp (1500 + 600 * (x - 0.5)) 30 x]) . 
+            mul (leg (0.1 + 0.5 * (1 - amp)) 0.5 0.8 0.1)) . 
+            rndSaw . 
+            (\x -> x * (1 + y * 0.07 * linsegr [0, 0.2, 0.3, 0.2, 0.85, 5, 1] 0.2 1 * osc (12 * z)))))
+        p = 0.25
+        t = 0.3
+        x = 0.45
+        y = 0.15
+        z = 0.45

@@ -123,7 +123,8 @@ module Csound.Catalog.Wave(
 
     -- * Other instruments
     okComputer, deepBass,
-    impulseMarimba1, impulseMarimba2
+    impulseMarimba1, impulseMarimba2,
+    celloWave
 
 ) where
 

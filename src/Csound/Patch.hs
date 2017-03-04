@@ -63,6 +63,9 @@ module Csound.Patch(
 	simpleBass, pwBass, deepBass, withDeepBass,
 	fmBass1, fmBass2,
 
+	-- * Bowed
+	celloSynt,
+
 	-- * Plucked
 	guitar, harpsichord,	
 
@@ -1859,3 +1862,5 @@ dafunkLead = adsrMono (\env (amp, cps) -> return $ fromMono $ dafunkWave cfq env
     where cfq = uoscBy (sines [1, 0, 0, 0, 0.05]) 0.5
 
 
+celloSynt :: Patch2
+celloSynt = withSmallHall' 0.25 $ polySynt $ \(amp, cps) -> at fromMono $ C.celloWave (amp, sig cps)
