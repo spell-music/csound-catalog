@@ -1592,7 +1592,7 @@ vedicSizeLofi = 4
 -- Good values for bandwidth lies in the interval [0, 120]
 vedicPad :: SharcInstr -> PadsynthBandwidth -> Patch2
 vedicPad instr bandwidth = mul 0.8 $ 
-	addPreFx 0.45 (pingPong 0.25 0.65 0.5) $ 
+	addPreFx 0.45 (return . pingPong 0.25 0.65 0.5) $ 
 	psDeepSoftPadSharc' (def { padSharcBandwidth = bandwidth, padSharcSize = 15 })  instr
 
 -- | Deep spiritual drones. Crossfade between two instruments.
@@ -1602,7 +1602,7 @@ vedicPad instr bandwidth = mul 0.8 $
 -- Good values for bandwidth lies in the interval [0, 120]
 vedicPadCfd :: Sig -> SharcInstr -> SharcInstr -> PadsynthBandwidth -> Patch2
 vedicPadCfd k instr1 instr2 bandwidth = mul 0.8 $ 
-	addPreFx 0.45 (pingPong 0.25 0.65 0.5) $ 
+	addPreFx 0.45 (return . pingPong 0.25 0.65 0.5) $ 
 	psDeepSoftPadSharcCfd' k (def { padSharcBandwidth = bandwidth, padSharcSize = 15 },  instr1) (def { padSharcBandwidth = bandwidth, padSharcSize = 15 },  instr2)
 
 -- | Deep spiritual drones. Crossfade between four instruments.
@@ -1612,7 +1612,7 @@ vedicPadCfd k instr1 instr2 bandwidth = mul 0.8 $
 -- Good values for bandwidth lies in the interval [0, 120]
 vedicPadCfd4 :: Sig -> Sig -> SharcInstr -> SharcInstr -> SharcInstr -> SharcInstr -> PadsynthBandwidth -> Patch2
 vedicPadCfd4 kX kY instr1 instr2 instr3 instr4 bandwidth = mul 0.8 $ 
-	addPreFx 0.45 (pingPong 0.25 0.65 0.5) $ 
+	addPreFx 0.45 (return .  pingPong 0.25 0.65 0.5) $ 
 	psDeepSoftPadSharcCfd4' kX kY 
 		(def { padSharcBandwidth = bandwidth, padSharcSize = 15 },  instr1) (def { padSharcBandwidth = bandwidth, padSharcSize = 15 },  instr2)
 		(def { padSharcBandwidth = bandwidth, padSharcSize = 15 },  instr3) (def { padSharcBandwidth = bandwidth, padSharcSize = 15 },  instr4)
@@ -1625,7 +1625,7 @@ vedicPadCfd4 kX kY instr1 instr2 instr3 instr4 bandwidth = mul 0.8 $
 -- Good values for bandwidth lies in the interval [0, 120]
 vedicPadHifi :: SharcInstr -> PadsynthBandwidth -> Patch2
 vedicPadHifi instr bandwidth = mul 0.8 $ 
-	addPreFx 0.45 (pingPong 0.25 0.65 0.5) $ 
+	addPreFx 0.45 (return . pingPong 0.25 0.65 0.5) $ 
 	deepPad $ 
 	psSoftPadSharc' (def { padSharcBandwidth = bandwidth, padSharcSize = 32 })  instr
 
@@ -1636,7 +1636,7 @@ vedicPadHifi instr bandwidth = mul 0.8 $
 -- Good values for bandwidth lies in the interval [0, 120]
 vedicPadLofi :: SharcInstr -> PadsynthBandwidth -> Patch2
 vedicPadLofi instr bandwidth = mul 0.8 $ 
-	addPreFx 0.45 (pingPong 0.25 0.65 0.5) $ 
+	addPreFx 0.45 (return . pingPong 0.25 0.65 0.5) $ 
 	deepPad $ 
 	psSoftPadSharc' (def { padSharcBandwidth = bandwidth, padSharcSize = 4 })  instr
 
