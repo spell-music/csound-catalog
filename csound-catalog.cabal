@@ -1,5 +1,5 @@
 Name:          csound-catalog
-Version:       0.7.0
+Version:       0.7.1
 Cabal-Version: >= 1.6
 License:       BSD3
 License-file:  LICENSE
@@ -11,11 +11,11 @@ Build-Type:    Simple
 Category:      Music
 Maintainer:    <anton.kholomiov@gmail.com>
 
-Description:   
-    A gallery of Csound instruments. 
+Description:
+    A gallery of Csound instruments.
 
 
-Extra-Source-Files : 
+Extra-Source-Files :
 
 Homepage:        https://github.com/anton-k/csound-catalog
 Bug-Reports:     https://github.com/anton-k/csound-catalog/issues
@@ -27,7 +27,7 @@ Source-repository head
 Library
   Ghc-Options:    -Wall
   Build-Depends:
-        base >= 4, base < 5, transformers >= 0.3, csound-expression >= 5.2.0, csound-sampler >=0.0.8.0, sharc-timbre
+        base >= 4, base < 5, transformers >= 0.3, csound-expression >= 5.2.2, csound-sampler >=0.0.8.1, sharc-timbre
   Hs-Source-Dirs:      src/
   Exposed-Modules:
         Csound.Catalog
@@ -42,11 +42,11 @@ Library
         Csound.Patch
   Other-Modules:
         Csound.Catalog.Wave.Woodwind
-        Csound.Catalog.Wave.WoodwindAlg     
+        Csound.Catalog.Wave.WoodwindAlg
         Csound.Catalog.Wave.Vowel
         Csound.Catalog.Wave.Ac
         Csound.Catalog.Wave.Fm
-        Csound.Catalog.Wave.VestigeOfTime        
+        Csound.Catalog.Wave.VestigeOfTime
         Csound.Catalog.Wave.Deserted
         Csound.Catalog.Wave.TheHeartbeat
         Csound.Catalog.Wave.TrappedInConvert
@@ -57,4 +57,4 @@ Library
         Csound.Catalog.Wave.Thor
         Csound.Catalog.Wave.Bitwig
         Csound.Catalog.Wave.Sharc
-      
+
