@@ -1,7 +1,7 @@
 {-# Language FlexibleContexts #-}
 module Csound.Catalog.Wave.Sean(
 	RissetBellSpec(..), rissetBell, timpani, timpaniSpec, noiseBell, noiseBellSpec,
-	snowCrackle, 
+	snowCrackle,
 	fmDrone, fmDrones,
 	tenorOsc, sopranoOsc
 ) where
@@ -15,7 +15,7 @@ data RissetBellSpec = RissetBellSpec
 	{ rissetBellRands 		:: [D]
 	, rissetBellRandShifts	:: [D]
 	, rissetBellDurs 		:: [D]
-	, rissetBellAmps		:: [Sig]	
+	, rissetBellAmps		:: [Sig]
 	, rissetBellFreqs       :: [Sig]
 	, rissetBellFreqShifts	:: [Sig]
 	}
@@ -37,10 +37,10 @@ rissetBell spec (from, to) dur amp cps = ares
 		env = expsegr [1, dur, 0.001] dur 0.001
 		ares = mul 0.75 $ fmap sum $ zipWithM (\(iamp, ifreq, ifreqDt) (idur, irand, irandDt) -> partial iamp ifreq ifreqDt idur irand irandDt) (zip3 iamps ifreqs ifreqDt) (zip3 idurs irands irandDt)
 
-timpaniSpec = RissetBellSpec 
+timpaniSpec = RissetBellSpec
 	{	rissetBellDurs       = [0.087, 0.5, 0.804, 0.065, 0.325, 0.54, 1,    0.195, 0.108, 0.89, 0.075]
 	,	rissetBellFreqs      = [0.8,  1.00,  1.5,  1.65,  1.97,  2,    2.44, 2.86,  2.71,  2.91,  3.27]
-	,	rissetBellFreqShifts = [0,    0,    0,     0,     0,     0,    0,    0,    0,      0,     0] 
+	,	rissetBellFreqShifts = [0,    0,    0,     0,     0,     0,    0,    0,    0,      0,     0]
 	,	rissetBellAmps       = [1,    2.52,  1.83, 0.55,  1.47,  1.67, 0.62, 0.5,  0.52,   0.55,  0.33]
 	,	rissetBellRands      = [0.56, 0.56, 0.92,  0.92,  1.19,  1.7,  2,    2.74, 3,      3.75,  4.07]
 	,	rissetBellRandShifts = [0,    1,    0,     1.7,   0,     0,    0,    0,    0,      0,     0] }
@@ -50,7 +50,7 @@ timpani (from, to) dur amp cps = mul env $ rissetBell timpaniSpec (from, to) dur
 	where env = expsegr [1, dur, 0.001] dur 0.001
 
 
-noiseBellSpec = RissetBellSpec 
+noiseBellSpec = RissetBellSpec
 	{ rissetBellDurs  			=[1,    0.9,  0.65, 0.55, 0.325, 0.35, 0.25, 0.2,  0.15,  0.1, 0.075]
 	, rissetBellFreqs 			= [0.56, 0.56, 0.92, 0.92, 1.19,  1.7,  3,    2.74, 3,     3.75, 4.07]
 	, rissetBellFreqShifts 		= [0,    1,    0,     1.7,    0,   0,   0,    0,    0,      0,      0]
@@ -72,13 +72,13 @@ snowCrackle :: Sig -> Sig
 snowCrackle speed = mlp 1200 0.1 $ mouseDrum speed (3 + 2 * uosc 0.1)  (160 + 100 * uosc 0.13)
 	where
 		mouseDrum :: Sig -> Sig -> Sig -> Sig
-		mouseDrum freq index cps = 
-			sched instr $ withDur dur $ fmap (\[a, b] -> (a, b)) $ randList 2 $ dust freq
-			where 
+		mouseDrum freq index cps =
+			sched instr $ withDur (sig dur) $ fmap (\[a, b] -> (a, b)) $ randList 2 $ dust freq
+			where
 				dur = 0.049
 				instr (rndCps, rndIndex) = return $
-					mouseDrumGrain dur 
-						(cps + 10 * sig (2 * rndCps - 1)) 
+					mouseDrumGrain dur
+						(cps + 10 * sig (2 * rndCps - 1))
 						(index + 0.01 * sig (2 * rndIndex - 1))
 
 		mouseDrumGrain dur icarfreq index = aosc
@@ -100,8 +100,8 @@ fmDronePartial amod' index idev kamp1 ifreq1 (a1, a2, a3, a4) = ares
 		aosc4 = osc (a4 + aosc1 + amod')
 		ares  = 0.5 * kamp1 * sum [aosc2, aosc3, aosc4]
 
-scDrone = fmDrone 3 
-scDrones = fmDrones 3 
+scDrone = fmDrone 3
+scDrones = fmDrones 3
 
 pulseIndex ns speed = 1 + 7 * seqSqr [seqDesc ns] speed
 
@@ -112,9 +112,9 @@ fmPulses amps harms ns speed = fmDrones (pulseIndex ns speed) amps harms (0.05, 
 fmDrone index (iatt, irel) cps = (aout1, aout2)
  	where
  		ifreq1 = cps
- 		iamp = 0.39 		
+ 		iamp = 0.39
  		idev = index * ifreq1
- 		kamp1 = leg iatt 0 1 irel 		
+ 		kamp1 = leg iatt 0 1 irel
 
  		f a1 a2 a3 a4 = iamp * fmDronePartial 0 index idev kamp1 ifreq1 (a1, a2, a3, a4)
 
@@ -123,12 +123,12 @@ fmDrone index (iatt, irel) cps = (aout1, aout2)
 
 fmDrones index amps harms (iatt, irel) cps = aout
 	where
-		iamp = 0.39 			 		
-	 	kamp1 = leg iatt 0 1 irel 
+		iamp = 0.39
+	 	kamp1 = leg iatt 0 1 irel
 
 		f amp h = do
 			let ifreq1 = h * cps
-	 		    idev = index * ifreq1 	 	    
+	 		    idev = index * ifreq1
 
 			a1 <- randomSig 1     0.03
 			a2 <- randomSig 0.998 0.025
@@ -152,24 +152,24 @@ gaussSig :: Sig -> Sig -> SE Sig
 gaussSig val dev = fmap ((+ val)) $ gauss val
 
 randiDev :: Sig -> Sig -> Sig -> SE Sig
-randiDev val dev cps = fmap (+ val) $ randi dev cps 
+randiDev val dev cps = fmap (+ val) $ randi dev cps
 
 randhDev :: Sig -> Sig -> Sig -> SE Sig
-randhDev val dev cps = fmap (+ val) $ randh dev cps 
+randhDev val dev cps = fmap (+ val) $ randh dev cps
 
 ------------------------------------------------------------------------
 -- choir
 
-tenorOsc   = voiceOsc 0.9 
-sopranoOsc = voiceOsc 0.8 
+tenorOsc   = voiceOsc 0.9
+sopranoOsc = voiceOsc 0.8
 
 linVibr2 (v1, v2) (vtime1, vtime2) = linseg [v1, vtime1, v1, vtime2, v2]
 
 voiceOsc :: Sig -> (Sig -> Sig) -> Sig -> Sig -> SE Sig
 voiceOsc mulHarm formantFilter kvib cps = at formantFilter $ voiceAnimator (RndDev 0.05 0.75)  kvib $ asig * kenv
-	where		
+	where
 		iharms = sig getSampleRate * 0.4 / cps
-		asig = gbuzz 1 cps iharms 1 mulHarm (sines3 [(1, 1, 0.25)]) 
+		asig = gbuzz 1 cps iharms 1 mulHarm (sines3 [(1, 1, 0.25)])
 		kenv = leg 0.1 0 1 0.1
 
 data RndDev = RndDev
@@ -190,13 +190,13 @@ addRnd spec ain = do
 	return $ ain * (1 + xDt)
 
 
-data Formant = Formant 
+data Formant = Formant
 	{ formantWeight :: Sig
 	, formantCenter :: Sig
-	, formantWidth  :: Sig	
+	, formantWidth  :: Sig
 	}
 
 ------------------------------------------------------------------------
--- 
+--
 
 
