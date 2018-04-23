@@ -2,26 +2,26 @@
 module Csound.Catalog.Drum.MiniPops(
 	MpSpec(..),
 
-	bass, snare1, snare2, rimShot, cymbal1, cymbal2, bongo1, bongo2, bongo3, 
+	bass, snare1, snare2, rimShot, cymbal1, cymbal2, bongo1, bongo2, bongo3,
 	claves, cowbell, guiro, maracas, quijada, tamb,
 
 	-- * Generic
-	bass', bdSpec, snare1', snSpec1, snare2', snSpec2, rimShot', rimSpec, 
-	cymbal1', cymSpec1, cymbal2', cymSpec2, bongo1', bonSpec1, bongo2', bonSpec2, bongo3', bonSpec3, 
+	bass', bdSpec, snare1', snSpec1, snare2', snSpec2, rimShot', rimSpec,
+	cymbal1', cymSpec1, cymbal2', cymSpec2, bongo1', bonSpec1, bongo2', bonSpec2, bongo3', bonSpec3,
 	claves', clSpec, cowbell', cowSpec, guiro', groSpec, maracas', marSpec, quijada', qjSpec, tamb', tamSpec,
 
 	-- * Sample
-	bd, sn1, sn2, rim, cym1, cym2, bon1, bon2, bon3, cl, cow, gro, mar, qj, tam, 
+	bd, sn1, sn2, rim, cym1, cym2, bon1, bon2, bon3, cl, cow, gro, mar, qj, tam,
 
 	-- ** Generic
 	bd', sn1', sn2', rim', cym1', cym2', bon1', bon2', bon3', cl', cow', gro', mar', qj', tam'
 ) where
 
-import Csound.Base hiding (guiro) 
+import Csound.Base hiding (guiro)
 import Csound.Sam
 
 data MpSpec = MpSpec {
-	  mpDur 	:: D	
+	  mpDur 	:: D
 	, mpCps 	:: D
 	, mpRnd     :: Maybe D }
 
@@ -37,14 +37,14 @@ addDur = addDur' 0.1
 toDrum :: Sig -> SE Sig
 toDrum a = rndAmp =<< addDur a
 
-defSpec dur cps = MpSpec 
+defSpec dur cps = MpSpec
 	{ mpDur   = dur
-	, mpCps   = cps 
+	, mpCps   = cps
 	, mpRnd   = Just 0.085 }
 
 rndVal :: D -> D -> D -> SE D
 rndVal total amount x = do
-	k <- birnd amount 
+	k <- birnd amount
 	return $ x  + k * total
 
 rndDur amt x = rndVal x amt x
@@ -52,13 +52,13 @@ rndCps amt x = rndVal x (amt / 10) x
 
 rndSpec :: MpSpec -> SE MpSpec
 rndSpec spec = do
-	dur  <- rndDur'	
+	dur  <- rndDur'
 	cps  <- rndCps'
-	return $ spec 
-		{ mpDur  = dur 		
+	return $ spec
+		{ mpDur  = dur
 		, mpCps  = cps }
-	where 
-		rndDur'  = (maybe return rndDur $ (mpRnd spec)) $ mpDur spec		
+	where
+		rndDur'  = (maybe return rndDur $ (mpRnd spec)) $ mpDur spec
 		rndCps'  = (maybe return rndCps $ (mpRnd spec)) $ mpCps spec
 
 rezz cps bw = reson (mpulse 1 0) cps (cps * bw) `withD` 2
@@ -97,7 +97,7 @@ pureSnare1' spec = toDrum =<< (mul (fadeOut dur) $ aout)
 		aenv   = transeg [1, dur ,-5 , 0]
 		asig1  = at (bhp 3000) $ mul aenv asig
 
-		xdur   = 0.006		
+		xdur   = 0.006
 		astrike = osc (transeg [cps,xdur,-4,60])
 		aenv2 = transeg	[1,xdur,-2,0]
 		astrike1 = aenv2 * astrike
@@ -118,9 +118,9 @@ pureSnare2' spec = toDrum =<< (mul (fadeOut dur) $ aout)
 		anoise = pink
 		asig   = fmap (\x -> butbp x 5200 5200 `withD` 1) anoise
 		aenv   = transeg [1, dur ,-8 , 0]
-		asig1  = at (bhp 3000) $ mul aenv asig	
+		asig1  = at (bhp 3000) $ mul aenv asig
 
-		xdur   = 0.005		
+		xdur   = 0.005
 		astrike = osc (transeg [cps,xdur,-4,cps / 4])
 		aenv2 = transeg	[1,xdur,-2,0]
 		astrike1 = aenv2 * astrike
@@ -141,7 +141,7 @@ pureRimShot' spec = toDrum $ mul (fadeOut dur) $ asig
 		dur = mpDur spec
 		cps = sig $ mpCps spec
 
-		aenv = expon 1 dur 0.0001		
+		aenv = expon 1 dur 0.0001
 		asig1 = osc' 0.2 cps
 		asig2 = reson asig1 cps 1500 `withD` 2
 		asig  = bhp 500 (asig1 + asig2 * 0.4 * 0.3)
@@ -159,7 +159,7 @@ pureCymbal1' spec = (toDrum =<< ) $ mul (fadeOut dur) $ do
 	let asig1 = blp 14000 $ reson	(anoise*aenv) icf (icf*0.7) `withD` 1
 	    asig2 = bhp 6000 $ (asig1 + anoise * 0.001)
 	return $ 0.25 * aenv * asig2
-	where	
+	where
 		dur = mpDur spec
 		cps = sig $ mpCps spec
 
@@ -242,7 +242,7 @@ claves = claves' clSpec
 
 clSpec = defSpec 0.186 400
 
-claves' spec = pureClaves' =<< rndSpec spec 
+claves' spec = pureClaves' =<< rndSpec spec
 
 pureClaves' spec = toDrum aout
 	where
@@ -251,14 +251,14 @@ pureClaves' spec = toDrum aout
 
 		aenv = linseg [1, dur, 0]
 		asig1 = rezz cps 0.025
-		asig2 = rezz (cps * 5.45) 0.03 
+		asig2 = rezz (cps * 5.45) 0.03
 		aout  = mul (3.2 * aenv * fadeOut dur) $ asig1 + 1.3 * asig2
 
 cowbell = cowbell' cowSpec
 
 cowSpec = defSpec 0.3 850
 
-cowbell' spec = pureCowbell' =<< rndSpec spec 
+cowbell' spec = pureCowbell' =<< rndSpec spec
 
 pureCowbell' spec = toDrum asig
 	where
@@ -274,7 +274,7 @@ guiro = guiro' groSpec
 
 groSpec = defSpec 0.256 66
 
-guiro' spec = pureGuiro' =<< rndSpec spec 
+guiro' spec = pureGuiro' =<< rndSpec spec
 
 pureGuiro' spec = toDrum asig
 	where
@@ -289,7 +289,7 @@ maracas = maracas' marSpec
 
 marSpec = defSpec 0.05 5000
 
-maracas' spec = pureMaracas' =<< rndSpec spec 
+maracas' spec = pureMaracas' =<< rndSpec spec
 
 pureMaracas' spec = toDrum =<< do
 	asig <- noise 1 0.04
@@ -299,20 +299,20 @@ pureMaracas' spec = toDrum =<< do
 		cps = sig $ mpCps spec
 
 		aenv =	transeg	[1,dur,-4,0]
-	
+
 
 quijada = quijada' qjSpec
 
 qjSpec = defSpec 0.817 550
 
-quijada' spec = pureQuijada' =<< rndSpec spec 
+quijada' spec = pureQuijada' =<< rndSpec spec
 
 pureQuijada' spec = toDrum $ bhp cps $ mul (6 * fadeOut dur) $ phi dur (1/22.7272) + phi (dur * 0.39) (1/13.1579)
 	where
 		dur = mpDur spec
 		cps = sig $ mpCps spec
 
-		phi dt freq = mul kenv $ reson (mpulse	1 freq) 2727 400 `withD` 1	
+		phi dt freq = mul kenv $ reson (mpulse	1 freq) 2727 400 `withD` 1
 			where kenv = transeg	[0.8,0.05,1, 1,dt-0.05,-6,0]
 
 
@@ -320,13 +320,13 @@ tamb = tamb' tamSpec
 
 tamSpec = defSpec 0.271 7000
 
-tamb' spec = pureTamb' =<< rndSpec spec 
+tamb' spec = pureTamb' =<< rndSpec spec
 
 pureTamb' spec = toDrum =<< do
 	anoise <- noise 1 0
-	return $ mul (1.5 * aenv * fadeOut dur) 
+	return $ mul (1.5 * aenv * fadeOut dur)
 		$ reson (bhp cps $ (+ (anoise * 0.1 * aenv)) $ reson (anoise * aenv) 4600 100 `withD` 2) 9000 3000 `withD` 1
-	where 
+	where
 		dur = mpDur spec
 		cps = sig $ mpCps spec
 		aenv = transeg	[1,dur,-8,0]
@@ -334,7 +334,7 @@ pureTamb' spec = toDrum =<< do
 -------------------------------------------------------
 -- Sampler
 
-mkSam = limSam 1
+mkSam = limSam 4
 
 -- | Bass drum
 bd :: Sam
@@ -346,11 +346,11 @@ sn1 = mkSam snare1
 
 -- | Snare 2
 sn2 :: Sam
-sn2 = mkSam snare2
+sn2 = limSam 2 snare2
 
 -- | Rim shot
 rim :: Sam
-rim = mkSam rimShot
+rim = limSam 1 rimShot
 
 -- | Cymbal 1
 cym1 :: Sam

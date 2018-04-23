@@ -2,7 +2,7 @@
 module Csound.Catalog.Drum.Tr808(
 	TrSpec(..),
 
-	bass, bass2, snare, openHiHat, closedHiHat, 
+	bass, bass2, snare, openHiHat, closedHiHat,
 	lowTom, midTom, highTom, cymbal, claves, rimShot,
 	maraca, highConga, midConga, lowConga,
 
@@ -38,16 +38,16 @@ data TrSpec = TrSpec {
 	, trRnd     :: Maybe D
 	}
 
-cpsSpec cps = TrSpec 
+cpsSpec cps = TrSpec
 	{ trDur   = 0.8
 	, trTune  = 0
-	, trCps   = cps 
+	, trCps   = cps
 	, trRnd   = Just 0.085 }
 
 
 rndVal :: D -> D -> D -> SE D
 rndVal total amount x = do
-	k <- birnd amount 
+	k <- birnd amount
 	return $ x  + k * total
 
 rndDur amt x = rndVal x amt x
@@ -59,19 +59,19 @@ rndSpec spec = do
 	dur  <- rndDur'
 	tune <- rndTune'
 	cps  <- rndCps'
-	return $ spec 
-		{ trDur  = dur 
+	return $ spec
+		{ trDur  = dur
 		, trTune = tune
 		, trCps  = cps }
-	where 
+	where
 		rndDur'  = (maybe return rndDur $ (trRnd spec)) $ trDur spec
 		rndTune' = (maybe return rndTune $ (trRnd spec)) $ trTune spec
 		rndCps'  = (maybe return rndCps $ (trRnd spec)) $ trCps spec
 
-bdSpec = TrSpec 
+bdSpec = TrSpec
 	{ trDur   = 0.95
 	, trTune  = 1
-	, trCps   = 55 
+	, trCps   = 55
 	, trRnd   = Just 0.05 }
 
 addDur' dt x = xtratim dt >> return x
@@ -99,7 +99,7 @@ pureBass' spec = rndAmp =<< addDur amix
 		aimp  = oscili  aenv1 acps sine
 		amix  = asig1 * 0.7 +  aimp * 0.25
 
-bdSpec2 = TrSpec 
+bdSpec2 = TrSpec
 	{ trDur   = 1.3
 	, trTune  = 1
 	, trCps   = 57
@@ -110,24 +110,24 @@ bass2 = bass2' bdSpec2
 bass2' spec = pureBass2' =<< rndSpec spec
 
 pureBass2' :: TrSpec -> SE Sig
-pureBass2' spec = (rndAmp <=< addDur) $ compr $ mul (expsegr [1, 0.6 * dur, 0.1, 0.4 * dur, 0.001] (0.4 * dur) 0.001) $ 
+pureBass2' spec = (rndAmp <=< addDur) $ compr $ mul (expsegr [1, 0.6 * dur, 0.1, 0.4 * dur, 0.001] (0.4 * dur) 0.001) $
     fosc 1 2 (0.5 * xeg 0.01 0.1 0.2 0.5) (cps * semitone (expseg [12, 0.01, 27, 0.3, 0.001]))
-    where 
+    where
     	compr x = dam x 0.65 2.4 2.3 0.05 0.1
     	dur = trDur spec
-    	cps = sig $ trCps spec 
+    	cps = sig $ trCps spec
 
 
 snSpec = cpsSpec 342
-	
+
 snare = snare' snSpec
 
 snare' spec = pureSnare' =<< rndSpec spec
 
--- sound consists of two sine tones, an octave apart and a noise signal		
+-- sound consists of two sine tones, an octave apart and a noise signal
 pureSnare' :: TrSpec -> SE Sig
 pureSnare' spec = rndAmp =<< addDur =<< (apitch + anoise)
-	where	
+	where
 		dur 	= trDur  spec
 		tune    = trTune spec
 		cps     = trCps  spec
@@ -141,7 +141,7 @@ pureSnare' spec = rndAmp =<< addDur =<< (apitch + anoise)
 		apitch2 = rndOsc (0.5 * sig cps)
 		apitch  = mul (0.75 * aenv1) (apitch1 + apitch2)
 
-		-- noise component		
+		-- noise component
 		aenv2	= expon 1 iNseDur 0.0005
 		kcf 	= expsegr [5000, 0.1, 3000] iNseDur 0.0001
 		anoise	= mul aenv2 $ do
@@ -166,20 +166,20 @@ closedHiHat' spec = genHiHat (expsega [1, (dur / 2), 0.001]) spec
 -- cps = 296
 genHiHat :: Sig -> TrSpec -> SE Sig
 genHiHat pitchedEnv spec = rndAmp =<< addDur =<< (amix1 + anoise)
-	where 	
+	where
 		dur 	= trDur  spec
 		tune    = trTune spec
 		cps     = trCps  spec
 
-		halfDur = dur * 0.5		
+		halfDur = dur * 0.5
 
 		-- pitched element
-		harmonics = [1.0, 0.962, 1.233, 1.175,1.419, 2.821]		
+		harmonics = [1.0, 0.962, 1.233, 1.175,1.419, 2.821]
 		amix 	= mul 0.5 $ fmap sum $ mapM (rndPw 0.25 . sig . (* (cps * octave tune))) harmonics
 		amix1   = mul pitchedEnv $ at (\asig -> bhp 5000 $ bhp 5000 $ reson asig (5000 * octave (sig tune)) 5000 `withD` 1) amix
 
 		-- noise element
-		kcf		= expseg [20000, 0.7, 9000, halfDur-0.1, 9000] 
+		kcf		= expseg [20000, 0.7, 9000, halfDur-0.1, 9000]
 		anoise 	= mul pitchedEnv $ do
 			x <- noise 0.8 0
 			return $ bhp 8000 $ blp kcf x
@@ -190,7 +190,7 @@ ltSpec = cpsSpec 90
 
 lowTom = lowTom' ltSpec
 midTom = midTom' mtSpec
-highTom = highTom' htSpec 
+highTom = highTom' htSpec
 
 -- cps = 200
 highTom' :: TrSpec -> SE Sig
@@ -206,7 +206,7 @@ lowTom' = genTom 0.6 (40, 100, 600)
 
 genTom :: D -> (Sig, Sig, Sig) -> TrSpec -> SE Sig
 genTom durDt (resonCf, hpCf, lpCf) spec = rndAmp =<< addDur =<< (asig + anoise)
-	where	
+	where
 		dur 	= trDur  spec
 		tune    = trTune spec
 		cps     = trCps  spec
@@ -215,14 +215,14 @@ genTom durDt (resonCf, hpCf, lpCf) spec = rndAmp =<< addDur =<< (asig + anoise)
 		halfDur = durDt * dur
 
 		-- sine tone signal
-		aAmpEnv	= transeg [1, halfDur, -10, 0.001]
+		aAmpEnv	= fadeIn 0.04 * transeg [1, halfDur, -10, 0.001]
 		afmod	= expsega  [5, 0.125/ifrq, 1]
 		asig  	= mul (-aAmpEnv) $ rndOsc (sig ifrq * afmod)
 
 		-- noise signal
 		aEnvNse = transeg [1, halfDur, -6 , 0.001]
 		otune = sig $ octave tune
-		anoise  = mul aEnvNse $ do 
+		anoise  = mul aEnvNse $ do
 			x <- noise 1 0.4
 			return $ blp (lpCf * otune) $ bhp (hpCf * otune) $ reson x (resonCf * otune) 800 `withD` 1
 
@@ -234,7 +234,7 @@ cymbal = cymbal' cymSpec
 -- cps = 296
 cymbal' :: TrSpec -> SE Sig
 cymbal' spec = rndAmp =<< addDur =<< (fmap (amix1 + ) anoise)
-	where 
+	where
 		dur 	= trDur  spec
 		tune    = trTune spec
 		cps     = trCps  spec
@@ -249,7 +249,7 @@ cymbal' spec = rndAmp =<< addDur =<< (fmap (amix1 + ) anoise)
 
 		-- noise element
 		aenv2   = expsega [1,0.3,0.07,fullDur-0.1,0.00001]
-		kcf		= expseg [14000, 0.7, 7000, fullDur-0.1, 5000] 
+		kcf		= expseg [14000, 0.7, 7000, fullDur-0.1, 5000]
 		anoise 	= mul aenv2 $ do
 			x <- noise 0.8 0
 			return $ bhp 8000 $ blp kcf x
@@ -290,7 +290,7 @@ pureRimShot' spec = rndAmp =<< addDur =<< (mul 0.8 $ aring + anoise)
 
 		-- ring
 		aenv1 =	expsega	[1,fullDur,0.001]
-		ifrq1 =	sig $ cps * octave tune		
+		ifrq1 =	sig $ cps * octave tune
 		aring = mul (0.5 * (aenv1 - 0.001)) $ at (bbp ifrq1 (ifrq1 * 8)) $ rndOscBy tabTR808RimShot ifrq1
 
 		-- noise
@@ -325,13 +325,13 @@ cowbell' spec = rndAmp =<< addDur =<< ares
 		kcf		= expseg [12000,0.07,iLPF2,1,iLPF2]
 		alpf    = at (blp kcf) amix
 		abpf    = at (\x -> reson x ifrq2 25) amix
-		ares    = mul (0.08 * kenv) $ at dcblock2 $ mul (0.06 * kenv1) abpf + mul 0.5 alpf + mul 0.9 amix 
+		ares    = mul (0.08 * kenv) $ at dcblock2 $ mul (0.06 * kenv1) abpf + mul 0.5 alpf + mul 0.9 amix
 
 -- TODO clap
 
 {-
 instr	112	;CLAP
-	krelease	release				;SENSE RELEASE OF THIS NOTE ('1' WHEN RELEASED, OTHERWISE ZERO)   
+	krelease	release				;SENSE RELEASE OF THIS NOTE ('1' WHEN RELEASED, OTHERWISE ZERO)
 	chnset	1-krelease,"Act12"              	;TURN ON ACTIVE LIGHT WHEN NOTE STARTS, TURN IT OFF WHEN NOTE ENDS
 	iTimGap	=	0.01				;GAP BETWEEN EVENTS DURING ATTACK PORTION OF CLAP
 	idur1  	=	0.02				;DURING OF THE THREE INITIAL 'CLAPS'
@@ -347,7 +347,7 @@ instr	112	;CLAP
 	 event_i	"i", p1+0.1, iTimGap*3,  idur2, p4
 	else
 	 kenv	transeg	1,p3,-25,0				;AMPLITUDE ENVELOPE
-	 iamp	random	0.7,1					;SLIGHT RANDOMISATION OF AMPLITUDE	
+	 iamp	random	0.7,1					;SLIGHT RANDOMISATION OF AMPLITUDE
 	 anoise	pinkish	kenv*iamp
 	 iBPF   	=	1100*octave(i(gktune12))	;FREQUENCY OF THE BANDPASS FILTER
 	 ibw    	=	2000*octave(i(gktune12))	;BANDWIDTH OF THE BANDPASS FILTER
@@ -396,7 +396,7 @@ lcSpec = cpsSpec 227
 
 highConga = highConga' hcSpec
 midConga  = midConga'  mcSpec
-lowConga  = lowConga'  lcSpec 
+lowConga  = lowConga'  lcSpec
 
 -- high conga
 -- cps = 420
@@ -428,7 +428,7 @@ genConga dt spec = rndAmp =<< addDur =<< asig
 -----------------------------------------------------
 -- sampler
 
-mkSam = limSam 1
+mkSam = limSam 4
 
 -- | Bass drum
 bd :: Sam
@@ -443,11 +443,11 @@ sn = mkSam snare
 
 -- | Open hi-hat
 ohh :: Sam
-ohh = mkSam openHiHat
+ohh = limSam 8 openHiHat
 
 -- | Closed hi-hat
 chh :: Sam
-chh = mkSam closedHiHat 
+chh = mkSam closedHiHat
 
 -- | High tom
 htom :: Sam
@@ -463,7 +463,7 @@ ltom = mkSam lowTom
 
 -- | Cymbal
 cym :: Sam
-cym = mkSam cymbal
+cym = limSam 8 cymbal
 
 -- | Claves
 cl :: Sam

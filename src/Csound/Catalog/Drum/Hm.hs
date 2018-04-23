@@ -3,15 +3,15 @@ module Csound.Catalog.Drum.Hm(
     -- * Subtractive
     dumb, dumbBass, pluckSnare, sortaKnockSweep, metalBoink,
 
-    -- * Fullkit    
+    -- * Fullkit
 
     -- ** Non-pitched drums
-    snare, openHihat, closedHihat,  
+    snare, openHihat, closedHihat,
 
     -- ** Pitched drums
     --
     -- The instrument turns a pitch (in Hz) to the signal.
-    bassDrum, crash, handClap, 
+    bassDrum, crash, handClap,
     bassDrum', crash', handClap',
 
     -- * Sampler
@@ -21,7 +21,7 @@ module Csound.Catalog.Drum.Hm(
 import Csound.Base
 import Csound.Sam
 
--- subtractive 
+-- subtractive
 
 bpb :: Sig -> Sig -> Sig -> Sig
 bpb cfq q asig = balance (bp cfq q asig) asig
@@ -44,9 +44,9 @@ dumb = (toDrum =<<) $ fmap (bpb 1000 100) $ rand $ expseg [0.0001, 0.01, 1, 0.04
 dumbBass :: SE Sig
 dumbBass = (toDrum =<<) $ fmap (bpb kfreqenv (kfreqenv / 8)) $ rand $ expseg [0.0001, 0.01, 1, 0.08, 0.01]
     where kfreqenv = expseg [50, 0.01, 200, 0.08, 50]
-    
-pluckSnare :: SE Sig 
-pluckSnare = toDrum $ pluck kampenv4 kptchenv 50 (elins [1, 1]) 4 `withDs` [0.8, 3] 
+
+pluckSnare :: SE Sig
+pluckSnare = toDrum $ pluck kampenv4 kptchenv 50 (elins [1, 1]) 4 `withDs` [0.8, 3]
     where
         kampenv4 = linseg [0, 0.001, 1, xdur - 0.21, 1, 0.02, 0]
         kptchenv = linseg [100, 0.01, 300, 0.2, 200, 0.01, 200]
@@ -57,16 +57,16 @@ sortaKnockSweep :: SE Sig
 sortaKnockSweep = (toDrum =<<) $
     fmap (resonsBy bpb
             [ (kfreqenv41, kfreqenv41 / 8)
-            , (kfreqenv42, kfreqenv42 / 4) 
+            , (kfreqenv42, kfreqenv42 / 4)
             ]
          ) $ rand kampenv4
     where
         kfreqenv41  = expseg [ 50, 0.01, 200, 0.08, 50]
-        kfreqenv42  = linseg [ 150, 0.01, 1000, 0.08, 250] 
-        kampenv4	= linseg [ 0, 0.01, 1, 0.08, 0, 0.01, 0] 
+        kfreqenv42  = linseg [ 150, 0.01, 1000, 0.08, 250]
+        kampenv4	= linseg [ 0, 0.01, 1, 0.08, 0, 0.01, 0]
 
 metalBoink :: SE Sig
-metalBoink = toDrum $ foscil kampenv61 30 1 6.726 kampenv62 sine 
+metalBoink = toDrum $ foscil kampenv61 30 1 6.726 kampenv62 sine
     where
         kampenv61   = expseg [ 0.01, 0.01, 1, 0.2, 0.1, 0.1, 0.001 ]
         kampenv62   = linseg [ 1, 0.1, 10, 0.1, 0.5, 0.01, 1 ]
@@ -78,7 +78,7 @@ bassDrum = bassDrum' 64
 bassDrum' :: D -> SE Sig
 bassDrum' cps = toDrum $ env * osc (sig cps * kgliss * 0.5)
     where env = linseg [0, 0.00245, 1, 0.1225, 0]
-          kgliss = expseg [10, 0.625, 1, 0.25, 1]  
+          kgliss = expseg [10, 0.625, 1, 0.25, 1]
 
 
 openHihat :: SE Sig
@@ -100,9 +100,9 @@ snare = toDrum =<< do
     asound <- rand 1
     let as1 = butbp asound 210 55
     return $ kenv2 * (as1 * 0.9 + asound * 0.8 * kenv1)
-    where 
+    where
         kenv1 = linseg [0, 0.00176, 1, 0.1232, 0]
-        kenv2 = expseg [0.01, 0.0002, 1, 0.0297, 0.01, 0.09, 0.01]  
+        kenv2 = expseg [0.01, 0.0002, 1, 0.0297, 0.01, 0.09, 0.01]
 
 crash = crash' $ cpspch 13.05
 
@@ -115,7 +115,7 @@ crash' cps = toDrum =<< do
         kenv2 = expseg [0.001, 0.0466, 1, 3.95, 0.001]
 
         resonator asig = 0.7 * a1 + 0.6 * kenv18 * a2
-            where 
+            where
                 flt a = butbp asig (sig $ a * cps) (sig $ 0.5 * cps)
                 a1 = sum $ fmap flt [1, 2.1, 2.8]
                 a2 = comb a1 0.5 (0.5 / cps)
@@ -125,7 +125,7 @@ crash' cps = toDrum =<< do
 
         aall = sum $ zipWith3 harm weights envelopes harmonics
 
-        harmonics = 
+        harmonics =
             [ [1, 0.89, 1.12341]
             , [2.24, 2.4 * 0.98, 2.14 * 1.02]
             , [3.312, 3.513312*0.89, 3.123312*1.11]
@@ -138,7 +138,7 @@ crash' cps = toDrum =<< do
 
         weights = replicate 7 0.2 ++ [0.1]
 
-        envelopes = fmap (\(a, b) -> expseg [0.01, a, 1, b, 0.01]) 
+        envelopes = fmap (\(a, b) -> expseg [0.01, a, 1, b, 0.01])
             [ (0.0274, 3.972)
             , (0.0264, 3.973)
             , (0.0209, 3.979)
@@ -158,15 +158,15 @@ handClap' cps = (toDrum =<< ) $ fmap onNoise $ rand 1
         kenv2 = expseg [0.001, 0.005, 1, 0.35, 0.001]
 
         onNoise asig = aout
-            where 
+            where
                 anoise1 = kenv1 * asig
                 anoise2 = kenv2 * asig
 
                 adel1   = anoise1
-                adel2   = delaySig 0.01 anoise1 
-                adel3   = delaySig 0.02 anoise1 
-                adel4   = delaySig 0.03 anoise2 
-            
+                adel2   = delaySig 0.01 anoise1
+                adel3   = delaySig 0.02 anoise1
+                adel4   = delaySig 0.03 anoise2
+
                 aout    = mean
                     [ rz adel1 2
                     , rz adel2 3
@@ -179,7 +179,7 @@ handClap' cps = (toDrum =<< ) $ fmap onNoise $ rand 1
 --------------------------------------------------
 -- sampler
 
-mkSam = limSam 1
+mkSam = limSam 4
 
 bd1 = mkSam dumb
 bd2 = mkSam dumbBass
@@ -194,4 +194,4 @@ chh = mkSam closedHihat
 
 bd3 = mkSam bassDrum
 cr  = mkSam crash
-clap = mkSam handClap 
+clap = mkSam handClap
